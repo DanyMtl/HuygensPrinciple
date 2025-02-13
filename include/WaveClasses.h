@@ -16,6 +16,13 @@ namespace waveForm
 {
     const unsigned int plane=0;
     const unsigned int spherical=1;
+    const unsigned int doubleSlit=2;
+}
+
+namespace amplitudeForm
+{
+    const unsigned int one=0;
+    const unsigned int costheta=1;
 }
 
 //**************************************************
@@ -31,18 +38,25 @@ private:
     
     unsigned int screen_width;  // the width of the screen where the sources will be created
     unsigned int screen_height; // the height of the screen where the sources will be created
-    unsigned int sources_width;
+    unsigned int wave_width;
     unsigned int initial_wave_form;
+    
+    unsigned int slits_distance;
+    unsigned int amplitude_func;
     
 public:
     WaveSources();
     
+    void setAmplitudeForm(unsigned int input_amplitude_func);
+    unsigned int getAmplitudeForm();
+    
     void setScreenSize(unsigned int input_width, unsigned int input_height );
     
-    void reinitializePlane( unsigned int n_sources,unsigned int input_sources_width);
+    void reinitializePlane( unsigned int n_sources,unsigned int input_wave_width);
     
-    void reinitializeCircular( unsigned int n_sources,unsigned int input_sources_width);
+    void reinitializeCircular( unsigned int n_sources,unsigned int input_wave_width);
     
+    void reinitializeDoubleSlit( unsigned int n_sources,unsigned int input_wave_width, unsigned int input_slits_distance);
     
     float x(int n);
     
@@ -57,7 +71,11 @@ public:
     
     float cosAngleKR(float x, float y, int n);
     
-    int getSourcesWidth();
+    unsigned int getSourcesWidth();
+    
+    unsigned int getSlitsDistance();
+    
+    
     
 };
 
@@ -86,31 +104,37 @@ private:
     
     float k;
     float w;
-    int wavelength;
+    unsigned int wavelength;
     float period;
-    int speed;
+    unsigned int speed;
     
 public:
     WaveSources ws;
     
-    GridWave(int input_screen_width, int input_screen_height, int input_wavelength,int input_speed, int n_sources, int width_sources, unsigned int wave_form);
+    void setAmplitudeForm(unsigned int input_amplitude_func);
+    unsigned int getAmplitudeForm();
+
+    GridWave(int input_screen_width, int input_screen_height, int input_wavelength,int input_speed, int n_sources, int width_sources, unsigned int wave_form, unsigned int input_distance_slits);
     // This method can be used to reinitialize the parameters when they are changed.
-    void initializeParam(int input_wavelength, int input_speed, int input_n_sources, int width_sources, unsigned int wave_form);
+    void initializeParam(int input_wavelength, int input_speed, int input_n_sources, int width_wave, unsigned int wave_form,unsigned int input_distance_slits);
     
     
     void initialize_grid();
     
     void getWaveValues(std::vector<unsigned char> & y_values,float time);
     
-    int getWaveLength();
+    
+    unsigned int getWaveLength();
       
     float getWavePeriod();
     
-    int getNSources();
+    unsigned int getNSources();
     
-    int getDistanceSources();
+    unsigned int getDistanceSources();
     
-    int getSourcesWidth();
+    unsigned int getSourcesWidth();
+    
+    unsigned int getSlitsDistance();
 };
 
 

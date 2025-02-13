@@ -28,35 +28,48 @@ WaveSources::WaveSources(){
     screen_width=0;
     screen_height=0;
     sources_coord.push_back({0.0,0.0});
+    amplitude_func=amplitudeForm::one;
 }
-    
+
 // Sets the size of the screen
 void WaveSources::setScreenSize(unsigned int input_width, unsigned int input_height ){
     screen_width=input_width;
     screen_height=input_height;
 }
-    
+
+void WaveSources::setAmplitudeForm(unsigned int input_amplitude_func)
+{
+    amplitude_func=input_amplitude_func;
+}
+
+unsigned int WaveSources::getAmplitudeForm()
+{
+   return amplitude_func;
+}
+
 // Initializes the sources by giving the number of sources and the distance between them
-void WaveSources::reinitializePlane( unsigned int n_sources,unsigned int input_sources_width){
+void WaveSources::reinitializePlane( unsigned int n_sources,unsigned int input_wave_width){
     initial_wave_form=waveForm::plane;
+    slits_distance=0;
+    
     if(screen_width==0 || screen_height==0)
     {
         std::cerr << "The screen size has not been defined in WaveSources."<< std::endl;
         exit(0);
     }
-    sources_width=input_sources_width;
+    wave_width=input_wave_width;
     
     float distance;
     if(n_sources>1)
-        distance=float(sources_width)/float(n_sources-1);
+        distance=float(wave_width)/float(n_sources-1);
     else{
         distance=0;
-        sources_width=0;
+        wave_width=0;
     }
     sources_coord.clear();
     direction_wave.clear();
     
-    float start_x_coord=float(int(screen_width)-int(sources_width))/2.0;
+    float start_x_coord=float(int(screen_width)-int(wave_width))/2.0;
     
     for(unsigned int n=0;n<n_sources;n++){
         float x_coord=start_x_coord+float(n)*distance;
@@ -66,9 +79,12 @@ void WaveSources::reinitializePlane( unsigned int n_sources,unsigned int input_s
     }
 }
 
-void WaveSources::reinitializeCircular( unsigned int n_sources,unsigned int input_sources_width){
+void WaveSources::reinitializeCircular( unsigned int n_sources,unsigned int input_wave_width){
     initial_wave_form=waveForm::plane;
-    float radius=float(input_sources_width)/2.0/PI;
+    
+    slits_distance=0;
+    
+    float radius=float(input_wave_width)/2.0/PI;
     if(screen_width==0 || screen_height==0)
     {
         std::cerr << "The screen size has not been defined in WaveSources."<< std::endl;
@@ -77,7 +93,7 @@ void WaveSources::reinitializeCircular( unsigned int n_sources,unsigned int inpu
     sources_coord.clear();
     direction_wave.clear();
     
-    sources_width=input_sources_width;
+    wave_width=input_wave_width;
 
     
     float start_x_coord=float(screen_width)/2;
@@ -95,6 +111,56 @@ void WaveSources::reinitializeCircular( unsigned int n_sources,unsigned int inpu
         direction_wave.push_back({rel_x/norm_rel_r,rel_y/norm_rel_r});
     }
 }
+
+void WaveSources::reinitializeDoubleSlit( unsigned int n_sources,unsigned int input_wave_width, unsigned int input_slits_distance){
+    initial_wave_form=waveForm::doubleSlit;
+    
+    if(screen_width==0 || screen_height==0)
+    {
+        std::cerr << "The screen size has not been defined in WaveSources."<< std::endl;
+        exit(0);
+    }
+    
+    wave_width=input_wave_width;
+    slits_distance=input_slits_distance;
+    
+    if(slits_distance<=wave_width){
+        reinitializePlane( n_sources*2, wave_width*2);
+        return;
+    }
+    
+    float distance_sources;
+    
+    if(n_sources>1)
+        distance_sources=float(wave_width)/float(n_sources-1);
+    else{
+        distance_sources=0;
+        wave_width=0;
+    }
+    
+    sources_coord.clear();
+    direction_wave.clear();
+    
+    float start_x_coord1=float(int(screen_width)-int(2*wave_width+slits_distance))/2.0;
+    float start_x_coord2=start_x_coord1+wave_width+slits_distance;
+
+    for(unsigned int n=0;n<n_sources;n++){
+        float x_coord=start_x_coord1+float(n)*distance_sources;
+        float y_coord=float(screen_height)-10;
+        sources_coord.push_back({x_coord,y_coord});
+        direction_wave.push_back({0.0,-1.0});
+        
+    }
+    
+    for(unsigned int n=0;n<n_sources;n++){
+        float x_coord=start_x_coord2+float(n)*distance_sources;
+        float y_coord=float(screen_height)-10;
+        sources_coord.push_back({x_coord,y_coord});
+        direction_wave.push_back({0.0,-1.0});
+        
+    }
+}
+
 
 // Gives the x coordinate of the source n
 float WaveSources::x(int n){
@@ -122,16 +188,24 @@ bool WaveSources::isRightDirection(int x, int y, unsigned int n){
 }
 
 float WaveSources::cosAngleKR(float x, float y, int n){
-    if(COS_DIRECTION==true)
+    if(amplitude_func==amplitudeForm::costheta)
         return (x*direction_wave[n].first +y*direction_wave[n].second)/std::hypot(x,y);
-    else
+    else if(amplitude_func==amplitudeForm::one)
         return 1.0;
+    else{
+        std::cerr << "Invalide amplitude_func (=" << amplitude_func << ") in WaveSources::cosAngleKR\n" << std::endl;
+        exit(0);
+    }
+    return 1.0;
 }
 
-int WaveSources::getSourcesWidth(){
-    return sources_width;
+unsigned int WaveSources::getSourcesWidth(){
+    return wave_width;
 }
 
+unsigned int WaveSources::getSlitsDistance(){
+    return slits_distance;
+}
 
 //**************************************************
 //
@@ -151,7 +225,7 @@ int WaveSources::getSourcesWidth(){
 
 
 // Initialize the grid for the calculations of the field values for each pixel of the screen
-GridWave::GridWave(int input_screen_width, int input_screen_height, int input_wavelength,int input_speed, int n_sources, int width_sources, unsigned int wave_form){
+GridWave::GridWave(int input_screen_width, int input_screen_height, int input_wavelength,int input_speed, int n_sources, int width_wave, unsigned int wave_form, unsigned int input_distance_slits){
 
     screen_width=input_screen_width;
     screen_height=input_screen_height;
@@ -160,15 +234,25 @@ GridWave::GridWave(int input_screen_width, int input_screen_height, int input_wa
     grid_amplitude.resize(screen_width*screen_height,0);
     
     
-    initializeParam(input_wavelength,input_speed,n_sources, width_sources, wave_form);
+    initializeParam(input_wavelength,input_speed,n_sources, width_wave, wave_form,input_distance_slits);
 
 
     initialize_grid();
 
 }
 
+void GridWave::setAmplitudeForm(unsigned int input_amplitude_func)
+{
+    ws.setAmplitudeForm(input_amplitude_func);
+}
+
+unsigned int GridWave::getAmplitudeForm()
+{
+   return ws.getAmplitudeForm();
+}
+
 // This method can be used to reinitialize the parameters when they are changed.
-void GridWave::initializeParam(int input_wavelength, int input_speed, int input_n_sources, int width_sources, unsigned int wave_form){
+void GridWave::initializeParam(int input_wavelength, int input_speed, int input_n_sources, int width_wave, unsigned int wave_form, unsigned int input_distance_slits){
     
     wavelength=input_wavelength;
     speed=input_speed;
@@ -177,10 +261,13 @@ void GridWave::initializeParam(int input_wavelength, int input_speed, int input_
     w=2*PI/period;
     //ws.reinitializePlaneWave(input_n_sources, width_sources);
     if(wave_form==waveForm::plane){
-        ws.reinitializePlane(input_n_sources, width_sources);
+        ws.reinitializePlane(input_n_sources, width_wave);
     }
     else if(wave_form==waveForm::spherical){
-        ws.reinitializeCircular(input_n_sources, width_sources);
+        ws.reinitializeCircular(input_n_sources, width_wave);
+    }
+    else if(wave_form==waveForm::doubleSlit){
+        ws.reinitializeDoubleSlit(input_n_sources, width_wave,input_distance_slits);
     }
     else{
         std::cerr << wave_form << " type of wave is not compatible with the GridWave class.\n";
@@ -245,7 +332,7 @@ void GridWave::getWaveValues(std::vector<unsigned char> & y_values,float time)
 }
 
 // returns the wave lenght
-int GridWave::getWaveLength(){
+unsigned  int GridWave::getWaveLength(){
     return wavelength;
 }
   
@@ -255,22 +342,24 @@ float GridWave::getWavePeriod(){
 }
 
 // returns the number of sources that produce the waves
-int GridWave::getNSources(){
+unsigned int GridWave::getNSources(){
     return ws.getNSources();
 }
 
 // returns the distances between the sources
-int GridWave::getDistanceSources(){
+unsigned int GridWave::getDistanceSources(){
     if(ws.getNSources()!=1)
         return ws.x(1) - ws.x(0);
     else
         return 0;
 }
 
-int GridWave::getSourcesWidth(){
+unsigned int GridWave::getSourcesWidth(){
     return round(ws.getSourcesWidth());
 }
 
-
+unsigned int GridWave::getSlitsDistance(){
+    return ws.getSlitsDistance();
+}
 
 
