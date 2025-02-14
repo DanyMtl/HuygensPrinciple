@@ -30,7 +30,7 @@ void GFParameters::resetValues(){
     slit_width=0;
     initial_wave_form=0;
     n_sources=0;
-    show_power=false;
+    show_intensity=false;
 }
 
 
@@ -62,7 +62,7 @@ bool GFParameters::operator==(const GFParameters& gfp_compare) const
        && slit_width==gfp_compare.slit_width
        && initial_wave_form==gfp_compare.initial_wave_form
        && n_sources==gfp_compare.n_sources
-       && show_power==gfp_compare.show_power)
+       && show_intensity==gfp_compare.show_intensity)
         return true;
     else
         return false;
@@ -93,7 +93,7 @@ void GFParameters::printParameters()
     if(initial_wave_form == waveForm::doubleSlit )
         std::cout <<"Double slit" << std::endl;
     
-    std::cout << "Show power : " << show_power << std::endl;
+    std::cout << "Show power : " << show_intensity << std::endl;
 
 
 }
@@ -417,7 +417,6 @@ void GridField::initializeParamAndGrid(GFParameters new_parameters){
 void GridField::initialize_grid(){
     if(grid_phase.size()!=screen_width*screen_height) grid_phase.resize(screen_width*screen_height,0);
     if(grid_amplitude.size()!=screen_width*screen_height) grid_amplitude.resize(screen_width*screen_height,0);
-    if(grid_power.size()!=screen_width*screen_height) grid_power.resize(screen_width*screen_height,0);
 
 
     FLOAT max_amplitude_value=0;
@@ -457,7 +456,6 @@ void GridField::initialize_grid(){
             
             grid_amplitude[pos_point]=local_amplitude;
             grid_phase[pos_point]=std::atan2(real_sum,imag_sum);
-            grid_power[pos_point]=local_amplitude*local_amplitude;
                   
         }
             
@@ -486,7 +484,6 @@ void GridField::initialize_grid(){
     FLOAT scaling_wave_factor_square=scaling_wave_factor*scaling_wave_factor;
     for(unsigned int i=0;i<screen_height*screen_width;i++){
         grid_amplitude[i]=grid_amplitude[i]*scaling_wave_factor;
-        grid_power[i]=grid_power[i]*scaling_wave_factor_square;
     }
 }
 
@@ -495,7 +492,7 @@ void GridField::initialize_grid(){
 // Calculates the field values for each pixel of the screen.
 void GridField::getFieldValues(std::vector<unsigned char> & y_values,FLOAT time)
 {
-    if(parameters.show_power==false){
+    if(parameters.show_intensity==false){
         for(unsigned int i=0;i<screen_height*screen_width;i++){
             FLOAT value=grid_amplitude[i]*sin(grid_phase[i]-w*time);
             if(value >1) value=1;
@@ -506,7 +503,7 @@ void GridField::getFieldValues(std::vector<unsigned char> & y_values,FLOAT time)
     else
     {
         for(unsigned int i=0;i<screen_height*screen_width;i++){
-            FLOAT value=grid_power[i];
+            FLOAT value=grid_amplitude[i]*grid_amplitude[i];
             if(value>1) value=1;
             y_values[i]=(unsigned char)(255*value);
 

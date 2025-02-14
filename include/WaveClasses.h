@@ -39,7 +39,7 @@ public:
     unsigned int initial_wave_form;
     unsigned int n_sources;
     
-    bool show_power;
+    bool show_intensity;
     
     GFParameters();
     void resetValues();
@@ -132,7 +132,6 @@ private:
     
     std::vector<FLOAT> grid_phase;
     std::vector<FLOAT> grid_amplitude;
-    std::vector<FLOAT> grid_power;
     
     FLOAT k;
     FLOAT w;

@@ -53,9 +53,9 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
             gf_params.amplitude_func =amplitudeForm::one;
         
         if (checkbox_power->isChecked())
-            gf_params.show_power =true;
+            gf_params.show_intensity =true;
         else
-            gf_params.show_power =false;
+            gf_params.show_intensity =false;
         
 
         
@@ -247,7 +247,7 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     widget_y_position+=23;
     checkbox_power = tgui::CheckBox::create(textOutput::getText("checkbox_power"));
     checkbox_power->setPosition(20, widget_y_position);
-    if(gf_params.show_power==true)
+    if(gf_params.show_intensity==true)
         checkbox_power->setChecked(true);
     gui_to_manage->add(checkbox_power);
     
