@@ -17,36 +17,30 @@
 #include "WaveClasses.h"
 
 
-
 class ManageGUI{
 private:
     tgui::EditBox::Ptr editBox_WL, editBox_nsources, editBox_wave_width, editBox_speed,editBox_slits_distance;
 
     tgui::Label::Ptr  label_WL, label_nsources, label_wave_width, label_speed, label_slits_distance;
-    tgui::CheckBox::Ptr checkbox_amplitude;
+    tgui::CheckBox::Ptr checkbox_amplitude,checkbox_power;
     tgui::Button::Ptr button;
     tgui::RadioButton::Ptr radioButton_plane, radioButton_spherical, radioButton_doubleSlit;
     tgui::Gui *gui_to_manage;
     
     tgui::Label::Ptr label_option, label_parameters;
     
-    
-    unsigned int amplitude_form;
-    int wl,wave_width,n_sources;
-    int wave_speed;
-    
-    int slits_distance;
-    
 
-    
     bool was_button_pressed;
-    int wave_form;
     
     unsigned int last_RB_option;
+    unsigned int initial_submit_yposition;
+    
+    GFParameters gf_params;
+    
 public:
-    ManageGUI(tgui::Gui &input_gui, GridWave &input_wg);
+    ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params);
         
-    std::vector<int> getNewParameters(sf::RenderWindow &input_window);
+    GFParameters getNewParameters(sf::RenderWindow &input_window);
    
     void buttonTextBack();
 
@@ -59,14 +53,15 @@ public:
     
     void setPlaneWidgets();
     void setSphericalWidgets();
-    void setDoubleSlitWidgets(unsigned int position_offset);
+    void setDoubleSlitWidgets();
     
     void updateContextualWidgets();
     
     void setAllWidgets();
 
     void createAllWidget();
-    
+    void showErrorWindow(std::string errorMessage);
+
 };
 
 #endif // GUICLASS_H 

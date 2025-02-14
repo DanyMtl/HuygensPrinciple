@@ -20,9 +20,6 @@
 
 
 
-
-
-
 //**************************************************
 //
 // The drawSourcesScreen function takes a table of pixels to draw
@@ -33,7 +30,6 @@
 void drawSourcesScreen(std::vector<std::uint8_t> &pix_table, unsigned int width, unsigned int height, WaveSources ws){
     if(ws.getNSources()<=0) {std::cerr << "No sources in WaveSources" << std::endl; exit(0);}
     
-    //auto [width, height] = pix_table.getSize();
     for(unsigned int n=0;n<ws.getNSources();n++){
         int x=std::round(ws.x(n));
         int y=std::round(ws.y(n));
@@ -52,83 +48,53 @@ void drawSourcesScreen(std::vector<std::uint8_t> &pix_table, unsigned int width,
     }
 }
 
-int close_error_window;
-void showErrorWindow(std::string errorMessage) {
-    sf::RenderWindow errorWindow(sf::VideoMode({300, 200}), "Erreur", sf::Style::Titlebar | sf::Style::Close);
-    tgui::Gui gui(errorWindow);
-    
-    auto label_err_msg=tgui::Label::create(errorMessage);
-    
-    label_err_msg->setHorizontalAlignment(tgui::HorizontalAlignment::Center);
-    label_err_msg->setVerticalAlignment(tgui::VerticalAlignment::Center);
-    label_err_msg->setTextSize(15);
-    
-    gui.add(label_err_msg);
-    
-    tgui::Layout2d windowSize = gui.getView().getSize();
-    float label_x_pos=(gui.getView().getSize().x - label_err_msg->getSize().x)/2;
-    float label_y_pos=(gui.getView().getSize().y - label_err_msg->getSize().y)/2-30;
-   
-    label_err_msg->setPosition(label_x_pos,label_y_pos);
-    
-    
-    auto button = tgui::Button::create("Ok");
-    button->setSize(60, 40);
-
-    float button_x_pos=(gui.getView().getSize().x - button->getSize().x)/2;
-    float button_y_pos=label_y_pos+label_err_msg->getSize().y+30;
-
-
-    button->setPosition(button_x_pos, button_y_pos);
-    gui.add(button);
-
-    button->onPress([&](){
-        errorWindow.close();
-    });
-    
-    while (errorWindow.isOpen()) {
-        while (const std::optional event = errorWindow.pollEvent()){
-            // "close requested" event: we close the mainWindow
-            if (event->is<sf::Event::Closed>())//|| close_error_window==1)
-            {
-                errorWindow.close();
-            }
-            gui.handleEvent(*event);
-        }
-
-        errorWindow.clear(sf::Color(200,200,200));
-        gui.draw();
-        errorWindow.display();
-    }
-}
 
 
 int main()
 {
     clock_t start_time = clock();
     
+    unsigned int main_win_width, main_win_height, input_win_width,input_win_height;
     
-    sf::RenderWindow mainWindow(sf::VideoMode({WIDTH, HEIGHT}), "Principe de Huygens");
+    sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+    
+    input_win_width=350;
+    input_win_height=400;
+    main_win_height=(unsigned int)(0.85*float(desktop.size.y));
+    main_win_width=desktop.size.x -input_win_width;
+    
+    
+    sf::RenderWindow mainWindow(sf::VideoMode({main_win_width, main_win_height}), "Principe de Huygens");
 
     mainWindow.setPosition(sf::Vector2i(0, 0));
 
-    sf::RenderWindow inputWindow(sf::VideoMode({350,400}), "Parametres");
+    sf::RenderWindow inputWindow(sf::VideoMode({input_win_width,input_win_height}), "Parametres");
 
-    inputWindow.setPosition(sf::Vector2i(WIDTH+10, 20));
+    inputWindow.setPosition(sf::Vector2i(main_win_width, 0));
 
-    sf::Texture texture(sf::Vector2u(WIDTH, HEIGHT)); // Throws sf::Exception if an error occurs
+    
+    sf::Texture texture(sf::Vector2u(main_win_width, main_win_height)); // Throws sf::Exception if an error occurs
     
     tgui::Gui gui(inputWindow);
  
         
     auto [width, height] = texture.getSize();
-    
+
     std::vector<std::uint8_t> pixels(width * height * 4, 255);
 
-
-    GridWave gw(width, height, WAVELENGTH,SPEED,20,1000 ,waveForm::plane,200);
     
-    ManageGUI manage_GUI(gui,gw);
+    GFParameters gf_params;
+    gf_params.speed=SPEED;
+    gf_params.wavelength=WAVELENGTH;
+    gf_params.amplitude_func=amplitudeForm::one;
+    gf_params.initial_wave_form=waveForm::plane;
+    gf_params.slit_width=800;
+    gf_params.slits_distance=0;
+    gf_params.n_sources=20;
+    
+    GridField gf(width, height, gf_params);
+    
+    ManageGUI manage_GUI(gui,gf.getParameters());
      
      
     std::vector<unsigned char> wave_values_table(width * height, 0);
@@ -162,17 +128,11 @@ int main()
         }
         
         // Checks if new parameters when set by the user and returns it.
-        std::vector<int> newparam = manage_GUI.getNewParameters(inputWindow);
-        if(!newparam.empty())
+        GFParameters new_parameters = manage_GUI.getNewParameters(inputWindow);
+        if(!(new_parameters==gf_params))
         {
-            gw.setAmplitudeForm(newparam[6]);
-            gw.initializeParam(newparam[0], newparam[3], newparam[1], newparam[2], newparam[4], newparam[5]);
-            if(newparam[4]==waveForm::doubleSlit){
-                if(newparam[2]>=newparam[5]){
-                    showErrorWindow("La distance entre les fentes (de\ncentre à centre) devrait être plus\ngrande que la largeur des fentes.\n Le simulateur va générer une onde\n plane (1 fente).");
-                    
-                }
-            }
+            gf.initializeParamAndGrid(new_parameters);
+            gf_params=gf.getParameters();
             
         }
         
@@ -180,9 +140,9 @@ int main()
         
 
 
-        float time_elapsed = float(clock()-start_time)/float(CLOCKS_PER_SEC);
+        FLOAT time_elapsed = FLOAT(clock()-start_time)/FLOAT(CLOCKS_PER_SEC);
 
-        gw.getWaveValues(wave_values_table, time_elapsed);
+        gf.getFieldValues(wave_values_table, time_elapsed);
         
         for(unsigned int i=0; i<wave_values_table.size();i++){
                 unsigned char amp = wave_values_table[i];
@@ -190,7 +150,7 @@ int main()
                 pixels[i*4 +1]=amp;
                 pixels[i*4 +2]=amp;
         }
-        drawSourcesScreen(pixels, width,height, gw.ws);
+        drawSourcesScreen(pixels, width,height, gf.ws);
         manage_GUI.buttonTextBack();
 
         mainWindow.clear(sf::Color::Black);
