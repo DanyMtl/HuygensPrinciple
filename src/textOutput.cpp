@@ -18,7 +18,7 @@ namespace textOutput {
             {"label_speed","Vitesse de l'onde\n(pixels/seconde)"},
             {"label_nsources","Nombre de sources"},
             {"label_wave_width_plane","Largeur de l'onde plane plane\ninitiale (en pixels)"},
-            {"label_wave_width_spherical","Circonférence de l'onde\nsphérique initiale (en pixels)"},
+            {"label_wave_width_circular","Circonférence de l'onde\ncircular initiale (en pixels)"},
             {"label_wave_width_doubleSlit","Largeur de chaque fente\n(en pixels)"},
             {"label_nsources","Nombre de sources"},
             {"label_nsources_doubleSlit","Nombre de sources par fente"},
@@ -33,7 +33,7 @@ namespace textOutput {
     
             
             {"radioButton_plane","Onde plane (1 fente)"},
-            {"radioButton_spherical","Onde circulaire"},
+            {"radioButton_circular","Onde circulaire"},
             {"radioButton_doubleSlit","Deux fentes"},
             
             {"label_display", "Options d'affichage"},
@@ -45,6 +45,9 @@ namespace textOutput {
             {"comboBox_french","French"},
             {"comboBox_english","English"},
 
+            {"label_copyright","© Dany Plouffe, 2025"},
+
+            
             {"error_doubleSlit","La distance entre les fentes (de\ncentre à centre) devrait être plus\ngrande que la largeur des fentes.\n Les valeurs seront ajustés."}
         };
 
@@ -57,7 +60,7 @@ namespace textOutput {
             {"label_speed","Wave speed\n(pixels/second)"},
             {"label_nsources","Number of sources"},
             {"label_wave_width_plane","Width of the initial\nplane wave (in pixels)"},
-            {"label_wave_width_spherical","Initial wave circonference\n(in pixels)"},
+            {"label_wave_width_circular","Initial wave circonference\n(in pixels)"},
             {"label_wave_width_doubleSlit","Slit width (in pixel)"},
             {"label_nsources","Number of sources"},
             {"label_nsources_doubleSlit","Number of sources per slit"},
@@ -70,7 +73,7 @@ namespace textOutput {
             {"label_parameters","Set the parameters"},
             
             {"radioButton_plane","Plane wave (1 slit)"},
-            {"radioButton_spherical","Circular wave"},
+            {"radioButton_circular","Circular wave"},
             {"radioButton_doubleSlit","Double slit"},
             
             {"label_display", "Display options"},
@@ -81,7 +84,8 @@ namespace textOutput {
             
             {"comboBox_french","Français"},
             {"comboBox_english","Anglais"},
-
+            
+            {"label_copyright","© Dany Plouffe, 2025"},
 
             {"error_doubleSlit","The distance between the slits\n(from center to center) should be\ngreater than the slits width. This\nprogram will change the parameters."}
         };

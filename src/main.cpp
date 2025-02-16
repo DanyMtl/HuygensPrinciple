@@ -12,37 +12,6 @@
 #include "GUIClass.h"
 
 
-//**************************************************
-//
-// The drawSourcesScreen function takes a table of pixels to draw
-// on the screen and adds the position of the sources in red.
-//
-//**************************************************
-
-void drawSourcesScreen(std::vector<std::uint8_t> &pix_table, unsigned int width, unsigned int height, WaveSources ws){
-    
-    if(ws.getNSources()<=0) {std::cerr << "No sources in WaveSources" << std::endl; exit(0);}
-    
-    for(unsigned int n=0;n<ws.getNSources();n++){
-        int x=std::round(ws.x(n));
-        int y=std::round(ws.y(n));
-        for(int j=y-2; j<=y+2;j++ ){
-            if(j<0 || j>= (int)height) continue;
-            for(int i=x-2; i<=x+2;i++ ){
-                if(i<0 || i>= (int)width) continue;
-
-                unsigned int pointer_pos=(j*width+i)*4;
-                pix_table[pointer_pos+0]= 255;
-                pix_table[pointer_pos+1]= 0;
-                pix_table[pointer_pos+2]= 0;
-                pix_table[pointer_pos+3]= 255;
-            }
-        }
-    }
-}
-
-
-
 int main()
 {
     clock_t start_time = clock();
@@ -63,11 +32,12 @@ int main()
     inputWindow.setPosition(sf::Vector2i(main_win_width, 0));
 
 
-    // This part of the code is necessary to fix a problem on Mac. When tested on a
-    // MacBook Air M2, the classes that manage the input from users (IMKClient
-    // and IMKInputSession) do not usually start unless we focus on another
-    // window and come back to the program. By calling the pollEvent() early, it seems
-    // to fix the problem and it does not require much ressources.
+    /* This part of the code is necessary to fix a problem on Mac. When tested on a
+     * MacBook Air M2, the classes that manage the input from users (IMKClient
+     * and IMKInputSession) do not usually start unless we focus on another
+     * window and come back to the program. By calling the pollEvent() early, it seems
+     * to fix the problem and it does not require much ressources.
+     */
     for(unsigned int i=0;i<10; i++)
     {
         (void) inputWindow.pollEvent();
@@ -79,8 +49,7 @@ int main()
     sf::Texture texture(sf::Vector2u(main_win_width, main_win_height)); // Throws sf::Exception if an error occurs
     auto [width, height] = texture.getSize();
 
-     
-
+    
     std::vector<std::uint8_t> pixels(width * height * 4, 255);
     
     
@@ -89,9 +58,8 @@ int main()
     GridField gf(width, height, gf_params);
     
     tgui::Gui gui(inputWindow);
+    
     ManageGUI manage_GUI(gui,gf.getParameters());
-
-
 
 
     // run the program as long as the mainWindow is open
@@ -119,7 +87,14 @@ int main()
         
         // Checks if new parameters when set by the user and returns it.
      
-        GFParameters new_parameters = manage_GUI.getNewParameters(inputWindow);
+        GFParameters new_parameters = manage_GUI.getNewParameters();
+        
+        // The GUI window needs to be updated here to make sure to change
+        // the submit button text if calculations were launched.
+        inputWindow.clear(sf::Color(255,255,255));
+        gui.draw();
+        inputWindow.display();
+       
         if(!(new_parameters==gf_params))
         {
             gf.initializeParamAndGrid(new_parameters);
@@ -130,24 +105,17 @@ int main()
 
         gf.getPixelsValues(pixels, time_elapsed);
 
-        drawSourcesScreen(pixels, width,height, gf.ws);
-       
-        manage_GUI.buttonTextBack();
+        gf.drawSourcesScreen(pixels);
+        gf.drawScaleScreen(pixels);
         manage_GUI.updateContextualWidgets();
 
-        
         texture.update(pixels.data());
         sf::Sprite sprite(texture);
         
-        mainWindow.clear(sf::Color::White);
-        inputWindow.clear(sf::Color(255,255,255));
-
-        gui.draw();
-        mainWindow.draw(sprite);
         
-        inputWindow.display();
+        mainWindow.clear(sf::Color::White);
+        mainWindow.draw(sprite);
         mainWindow.display();
-
     }
     return 0;
 }

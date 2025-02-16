@@ -16,10 +16,35 @@
 
 #define FONT_SIZE 13
 
-//********************************************************************
-// This ManageGUI constructor calls all the member functions to
-// set up the user input window and set up all the necessary variables.
-//********************************************************************
+/*
+ * Converts a real number into a string and keeps a limited number of decimals.
+ *
+ * number : The number to convert (float, double, etc).
+ * n_decimals : The number of decimals to keep for the string.
+ *
+ * return : The string of the number.
+ */
+
+template <typename T> std::string keepNDecimals(T number, unsigned int n_decimals)
+{
+    std::ostringstream string_number;
+    string_number << std::fixed << std::setprecision(n_decimals) << number;
+    return string_number.str();
+    
+}
+
+
+/*
+ * This constructor prepares the widgets for the GUI. All used widget will
+ * be created and will be organized. The contextual widgets are also created
+ * but are not added to the GUI. The tgui::Gui object pointer will also be saved
+ * to make it accessible by the Class ManageGUI.
+ *
+ * input_gui : The tgui::Gui object in the window that manage the GUI.
+ * input_gf_params : The parameters used for the wave simulation.
+ *
+ */
+
 ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
     
     gf_params=input_gf_params;
@@ -28,19 +53,21 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
     
     gui_to_manage=&input_gui;
 
-    
-    setGeneralWidgets(10);
+    setGeneralWidgets();
     updateContextualWidgets();
     
     was_button_pressed=false;
 
+    last_waveForm_option=input_gf_params.initial_wave_form;
 
+    
+    // when the user changes the value of the amplitude scale slider
     slider_scale->onValueChange([&](FLOAT slider_value){
         gf_params.view_scale_factor=slider_value;
     });
 
+    // when the user change the status of the intensity plot checkbox
     checkbox_intensity->onChange([this]() {
-
         if(checkbox_intensity->isChecked()){
             gf_params.show_intensity=true;
         }
@@ -52,17 +79,18 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
 
     });
     
-    button->onPress([&](){
+    // when the user presses on the "Submit" button
+    button_submit->onPress([&](){
         std::string userInput;
 
         userInput=editBox_WL->getText().toStdString();
-        if(!userInput.empty()) gf_params.wavelength = std::stoi(userInput);
+        if(!userInput.empty()) gf_params.wavelength = std::stod(userInput);
         userInput=editBox_nsources->getText().toStdString();
         if(!userInput.empty()) gf_params.n_sources = std::stoi(userInput);
         userInput=editBox_wave_width->getText().toStdString();
-        if(!userInput.empty()) gf_params.slit_width = std::stoi(userInput);
+        if(!userInput.empty()) gf_params.slit_width = std::stod(userInput);
         userInput=editBox_speed->getText().toStdString();
-        if(!userInput.empty()) gf_params.speed = std::stoi(userInput);
+        if(!userInput.empty()) gf_params.speed = std::stod(userInput);
         userInput=editBox_slits_distance->getText().toStdString();
         
         if (checkbox_amplitude->isChecked())
@@ -75,17 +103,13 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
         else
             gf_params.show_intensity =false;
         
-
-        
-        
-        
-        if(!userInput.empty()) gf_params.slits_distance = std::stoi(userInput);
+        if(!userInput.empty()) gf_params.slits_distance = std::stod(userInput);
         
         if (radioButton_plane->isChecked()){
             gf_params.initial_wave_form =waveForm::plane;
         }
-        else if (radioButton_spherical->isChecked()){
-            gf_params.initial_wave_form =waveForm::spherical;
+        else if (radioButton_circular->isChecked()){
+            gf_params.initial_wave_form =waveForm::circular;
         }
         else if (radioButton_doubleSlit->isChecked()){
             gf_params.initial_wave_form =waveForm::doubleSlit;
@@ -94,6 +118,9 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
             std::cerr << "Initial wave form not valid.\nThe problem is in the ManageGUI Class." <<std::endl;
         }
         was_button_pressed=true;
+        
+        button_submit->setText(textOutput::getText("submit_button_calc"));
+
     });
     
     comboBox_language->onItemSelect([&](int index){
@@ -107,37 +134,12 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
         }
         setTextInGUI();
     });
-
 }
 
 
-//********************************************************************
-// The member function setSubmitWidgetCoord(...) sets the y coordinate
-// of the submit button.
-//********************************************************************
-
-void ManageGUI::setSubmitWidgetCoord(unsigned int position_offset){
-
-    button->setPosition(100, position_offset);
-    
-    
-}
-
-//********************************************************************
-// The member function createAllWidget(...) creates all the widgets
-// necessary for the GUI.
-//********************************************************************
-
-void ManageGUI::createAllWidget()
-{
-    
-}
-
-//********************************************************************
-// The member function setPlaneWidgets(...)  sets up the widgets
-// configuration and text for the "Plane wave" option.
-//********************************************************************
-
+/*
+ * Sets up the the widgets configuration and text for the "Plan wave"option.
+ */
 void ManageGUI::setPlaneWidgets(){
     gui_to_manage->remove(editBox_slits_distance);
     gui_to_manage->remove(label_slits_distance);
@@ -146,25 +148,23 @@ void ManageGUI::setPlaneWidgets(){
 
     return;
 }
-//********************************************************************
-// The member function setSphericalWidgets(...)  sets up the widgets
-// configuration and text for the "Spherical wave" option.
-//********************************************************************
 
-void ManageGUI::setSphericalWidgets(){
+
+/*
+ * Sets up the the widgets configuration and text for the "Circular wave" option.
+ */
+void ManageGUI::setCircularWidgets(){
     gui_to_manage->remove(editBox_slits_distance);
     gui_to_manage->remove(label_slits_distance);
-    label_wave_width->setText(textOutput::getText("label_wave_width_spherical"));
+    label_wave_width->setText(textOutput::getText("label_wave_width_circular"));
     label_nsources->setText(textOutput::getText("label_nsources"));
     return;
 }
 
 
-//********************************************************************
-// The member function setPlaneWidgets(...)  sets up the widgets
-// configuration and text for the "Double slit" option.
-//********************************************************************
-
+/*
+ * Sets up the the widgets configuration and text for the "Double slit" option.
+ */
 void ManageGUI::setDoubleSlitWidgets(){
     
     label_wave_width->setText(textOutput::getText("label_wave_width_doubleSlit"));
@@ -174,21 +174,22 @@ void ManageGUI::setDoubleSlitWidgets(){
     gui_to_manage->add(label_slits_distance, "LabelSlitsDistance");
 }
 
-//********************************************************************
-// The member function updateContextualWidgets(...)  manages the
-// contextual widgets, those that depend on the options selected by the user.
-//********************************************************************
-
+/*
+ * Is called to update the contextual widgets if necessary, after the user selected
+ * a new wave form. It has to be called in main() after the calculations are performed to update
+ * the submit button text.
+ */
 void ManageGUI::updateContextualWidgets(){
-    unsigned int current_RB_option=9999;
+    unsigned int current_waveForm_option=9999;
+    // Checks which option was selected
     if (radioButton_plane->isChecked()){
-        current_RB_option=waveForm::plane;
+        current_waveForm_option=waveForm::plane;
     }
-    else if (radioButton_spherical->isChecked()){
-        current_RB_option=waveForm::spherical;
+    else if (radioButton_circular->isChecked()){
+        current_waveForm_option=waveForm::circular;
     }
     else if (radioButton_doubleSlit->isChecked()){
-        current_RB_option=waveForm::doubleSlit;
+        current_waveForm_option=waveForm::doubleSlit;
     }
     else
     {
@@ -196,41 +197,51 @@ void ManageGUI::updateContextualWidgets(){
         exit(0);
     }
     
-    if(current_RB_option==last_RB_option)
-        return;
- 
-    if(current_RB_option==waveForm::plane){
-        setPlaneWidgets();
-        setSubmitWidgetCoord(initial_submit_yposition);
-    }
-    else if(current_RB_option==waveForm::spherical){
-        setSphericalWidgets();
-        setSubmitWidgetCoord(initial_submit_yposition);
-    }
-    else if(current_RB_option==waveForm::doubleSlit){
-        setDoubleSlitWidgets();
-        setSubmitWidgetCoord(initial_submit_yposition+35);
+    if(was_button_pressed){
+        button_submit->setText(textOutput::getText("submit_button"));
+        was_button_pressed=false;
     }
     
-    last_RB_option=current_RB_option;
+    // Exit this method if the user has not made any change.
+    if(current_waveForm_option==last_waveForm_option)
+        return;
+    
+    // Change the widgets if the user selected a new form
+    if(current_waveForm_option==waveForm::plane){
+        setPlaneWidgets();
+        button_submit->setPosition(100, initial_submit_yposition);
+    }
+    else if(current_waveForm_option==waveForm::circular){
+        setCircularWidgets();
+        button_submit->setPosition(100, initial_submit_yposition);
+    }
+    else if(current_waveForm_option==waveForm::doubleSlit){
+        setDoubleSlitWidgets();
+        button_submit->setPosition(100, initial_submit_yposition+35);
+    }
+    
+    last_waveForm_option=current_waveForm_option;
+    
+
+        
     return;
 }
 
 
-//********************************************************************
-// The member function setGeneralWidgets(...) sets up all the
-// widgets in the input windows and will make available all the general ones.
-//********************************************************************
+/*
+ * Creates all the widgets, sets them up (position, size, etc) and adds them to the GUI.
+ * At the end, setTextInGUI is called to set the text in the widget.
+ */
 
-void ManageGUI::setGeneralWidgets(unsigned int position_offset){
-    
-    unsigned int widget_y_position=position_offset;
-    last_RB_option=999;
-    
+void ManageGUI::setGeneralWidgets(){
+    unsigned int widget_y_position=0;
+
+    widget_y_position+=10;
     label_option=tgui::Label::create();
     label_option->setPosition(5,widget_y_position);
     label_option->setTextSize(FONT_SIZE+3);
     gui_to_manage->add(label_option, "OptionWaveForm");
+    
     
     widget_y_position+=25;
     radioButton_plane=tgui::RadioButton::create();
@@ -240,16 +251,17 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     gui_to_manage->add(radioButton_plane, "RadioButtonPlane");
     
     widget_y_position+=22;
-    radioButton_spherical=tgui::RadioButton::create();
-    radioButton_spherical->setPosition(20,widget_y_position);
-    radioButton_spherical->setTextClickable(true);
-    gui_to_manage->add(radioButton_spherical, "RadioButtonSphere");
+    radioButton_circular=tgui::RadioButton::create();
+    radioButton_circular->setPosition(20,widget_y_position);
+    radioButton_circular->setTextClickable(true);
+    gui_to_manage->add(radioButton_circular, "RadioButtonSphere");
 
     widget_y_position+=22;
     radioButton_doubleSlit=tgui::RadioButton::create();
     radioButton_doubleSlit->setPosition(20, widget_y_position);
     radioButton_doubleSlit->setTextClickable(true);
     gui_to_manage->add(radioButton_doubleSlit, "RadioButtonDoubleSlit");
+    
     
     widget_y_position+=30;
     separator1 = tgui::SeparatorLine::create();
@@ -265,6 +277,7 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     label_parameters->setTextSize(FONT_SIZE+3);
     gui_to_manage->add(label_parameters, "LabelParameters");
     
+    
     widget_y_position+=28;
     checkbox_amplitude = tgui::CheckBox::create();
     checkbox_amplitude->setPosition(20, widget_y_position);
@@ -277,8 +290,8 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     editBox_WL = tgui::EditBox::create();
     editBox_WL->setSize(100, 30);
     editBox_WL->setPosition(10, widget_y_position);
-    editBox_WL->setText(std::to_string(gf_params.wavelength));
-    editBox_WL->setInputValidator(tgui::EditBox::Validator::UInt);
+    editBox_WL->setText(keepNDecimals(gf_params.wavelength,1));
+    editBox_WL->setInputValidator(tgui::EditBox::Validator::Float);
     gui_to_manage->add(editBox_WL, "EditBoxWavelength");
     
     label_WL = tgui::Label::create();
@@ -286,18 +299,20 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     label_WL->setTextSize(FONT_SIZE);
     gui_to_manage->add(label_WL, "LabelWavelenght");
 
+    
     widget_y_position+=35;
     editBox_speed = tgui::EditBox::create();
     editBox_speed->setSize(100, 30);
     editBox_speed->setPosition(10,widget_y_position);
-    editBox_speed->setText(std::to_string(gf_params.speed));
-    editBox_speed->setInputValidator(tgui::EditBox::Validator::UInt);
+    editBox_speed->setText(keepNDecimals(gf_params.speed,1));
+    editBox_speed->setInputValidator(tgui::EditBox::Validator::Float);
     gui_to_manage->add(editBox_speed, "EditBoxSpeed");
 
     label_speed= tgui::Label::create();
     label_speed->setPosition(120, widget_y_position);
     label_speed->setTextSize(FONT_SIZE);
     gui_to_manage->add(label_speed, "LabelSpeed");
+    
     
     widget_y_position+=35;
     editBox_nsources = tgui::EditBox::create();
@@ -317,8 +332,8 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     editBox_wave_width = tgui::EditBox::create();
     editBox_wave_width->setSize(100, 30);
     editBox_wave_width->setPosition(10, widget_y_position);
-    editBox_wave_width->setText(std::to_string(gf_params.slit_width));
-    editBox_wave_width->setInputValidator(tgui::EditBox::Validator::UInt);
+    editBox_wave_width->setText(keepNDecimals(gf_params.slit_width,1));
+    editBox_wave_width->setInputValidator(tgui::EditBox::Validator::Float);
     gui_to_manage->add(editBox_wave_width, "EditBoxWaveWidth");
 
     label_wave_width= tgui::Label::create();
@@ -326,41 +341,40 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     label_wave_width->setTextSize(FONT_SIZE);
     gui_to_manage->add(label_wave_width, "LabelWaveWidth");
     
-    initial_submit_yposition=widget_y_position + editBox_wave_width->getSize().y+15;
+    initial_submit_yposition=widget_y_position+40;
 
-    
     widget_y_position+=35;
     editBox_slits_distance=tgui::EditBox::create();
     editBox_slits_distance->setSize(100, 30);
     editBox_slits_distance->setPosition(10, widget_y_position);
-    editBox_slits_distance->setText(std::to_string(gf_params.slits_distance));
-    editBox_slits_distance->setInputValidator(tgui::EditBox::Validator::UInt);
+    editBox_slits_distance->setText(keepNDecimals(gf_params.slits_distance,1));
+    editBox_slits_distance->setInputValidator(tgui::EditBox::Validator::Float);
     
     label_slits_distance=tgui::Label::create();
     label_slits_distance->setPosition(120,widget_y_position+6);
     label_slits_distance->setTextSize(FONT_SIZE);
 
 
-    widget_y_position+=70;
-    button = tgui::Button::create();
-    button->setSize(120, 40);
-    setSubmitWidgetCoord(initial_submit_yposition);
-    gui_to_manage->add(button, "SubmitButton");
-    button->setFocused(true);
+    button_submit = tgui::Button::create();
+    button_submit->setSize(120, 40);
+    button_submit->setPosition(100, initial_submit_yposition);
+    gui_to_manage->add(button_submit, "SubmitButton");
 
-    widget_y_position+=40;
     
+    widget_y_position+=50+40;
     separator2 = tgui::SeparatorLine::create();
     separator2->setPosition({0, widget_y_position});
     separator2->setSize({500, 2});
     separator2->getRenderer()->setColor(tgui::Color::Black);
     gui_to_manage->add(separator2,"separator2");
+ 
     
     widget_y_position+=10;
     label_display = tgui::Label::create();
     label_display->setPosition(10,widget_y_position);
     label_display->setTextSize(FONT_SIZE+3);
     gui_to_manage->add(label_display,"LabelDisplay");
+    
     
     widget_y_position+=35;
     checkbox_intensity = tgui::CheckBox::create();
@@ -369,6 +383,7 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
         checkbox_intensity->setChecked(true);
     gui_to_manage->add(checkbox_intensity, "CheckBoxIntensity");
 
+    
     widget_y_position+=35;
     label_slider_scale = tgui::Label::create();
     label_slider_scale->setPosition(10, widget_y_position);
@@ -386,12 +401,14 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     slider_scale->setPosition(30,widget_y_position);
     gui_to_manage->add(slider_scale, "SliderScale");
     
+    
     widget_y_position+=35;
     separator3 = tgui::SeparatorLine::create();
     separator3->setPosition({0, widget_y_position});
     separator3->setSize({500, 2});
     separator3->getRenderer()->setColor(tgui::Color::Black);
     gui_to_manage->add(separator3,"separator3");
+    
     
     widget_y_position+=10;
     label_language = tgui::Label::create();
@@ -412,15 +429,25 @@ void ManageGUI::setGeneralWidgets(unsigned int position_offset){
     comboBox_language->setPosition(20,widget_y_position);
     gui_to_manage->add(comboBox_language,"cmoboBox_language");
     
+    
+    widget_y_position+=35;
+    label_copyright = tgui::Label::create();
+    label_copyright->setPosition(120, widget_y_position);
+    label_copyright->setTextSize(FONT_SIZE-2);
+    gui_to_manage->add(label_copyright, "LabelCopyright");
+    
     setTextInGUI();
+
 }
 
-
-
+/*
+ * Sets the texting the GUI. It is called at the beginining and when the user changes
+ * the prefered language.
+ */
 void ManageGUI::setTextInGUI(){
     label_option->setText(textOutput::getText("label_option"));
     radioButton_plane->setText(textOutput::getText("radioButton_plane"));
-    radioButton_spherical->setText(textOutput::getText("radioButton_spherical"));
+    radioButton_circular->setText(textOutput::getText("radioButton_circular"));
     radioButton_doubleSlit->setText(textOutput::getText("radioButton_doubleSlit"));
     label_parameters->setText(textOutput::getText("label_parameters"));
     checkbox_amplitude->setText(textOutput::getText("checkbox_amplitude"));
@@ -429,7 +456,7 @@ void ManageGUI::setTextInGUI(){
     label_nsources->setText(textOutput::getText("label_nsources"));
     label_wave_width->setText(textOutput::getText("label_wave_width_plane"));
     label_slits_distance->setText(textOutput::getText("label_slits_distance"));
-    button->setText(textOutput::getText("submit_button"));
+    button_submit->setText(textOutput::getText("submit_button"));
     label_display->setText(textOutput::getText("label_display"));
     checkbox_intensity->setText(textOutput::getText("checkbox_intensity"));
     label_slider_scale->setText(textOutput::getText("label_slider_scale"));
@@ -437,52 +464,67 @@ void ManageGUI::setTextInGUI(){
 
     comboBox_language->changeItemById("en",textOutput::getText("comboBox_english"));
     comboBox_language->changeItemById("fr", textOutput::getText("comboBox_french"));
+    
+    label_copyright->setText(textOutput::getText("label_copyright"));
 
    
 }
 
-// *******************************************************************
-// The member function getNewParameters(...) returns the parameters
-// as they were input by the user.
-// *******************************************************************
-
-GFParameters ManageGUI::getNewParameters(sf::RenderWindow &input_window)
+/*
+ * Returns the parameters that the user have entered. It also checks if the values make sense
+ * (they should be greater than 0). Also, if the submit button was pressed, it changes the text
+ * of it.
+ *
+ * input_window : The input window that is used to create the widgets.
+ *
+ * return : The parameters that were set by the user.
+ */
+GFParameters ManageGUI::getNewParameters()
 {
     if(gf_params.initial_wave_form==waveForm::doubleSlit){
         if(gf_params.slit_width>=gf_params.slits_distance){
             showErrorWindow(textOutput::getText("error_doubleSlit"));
             gf_params.slit_width=100;
             gf_params.slits_distance=2*gf_params.slit_width;
-            editBox_wave_width->setText(std::to_string( gf_params.slit_width));
-            editBox_slits_distance->setText(std::to_string( gf_params.slits_distance));
-           
-
+            editBox_wave_width->setText(keepNDecimals( gf_params.slit_width,1));
+            editBox_slits_distance->setText(keepNDecimals( gf_params.slits_distance,1));
         }
-        
     }
     
-    if(was_button_pressed)
-    {
-        button->setText(textOutput::getText("submit_button_calc"));
-        input_window.clear(sf::Color(255,255,255));
-        gui_to_manage->draw();
-        input_window.display();
-        
-        was_button_pressed=false;
+    if(gf_params.n_sources<1){
+        gf_params.n_sources=1;
+        editBox_nsources->setText(std::to_string( gf_params.n_sources));
     }
+    
+    if(gf_params.wavelength<=0){
+        gf_params.wavelength=10;
+        editBox_WL->setText(keepNDecimals( gf_params.wavelength,1));
+    }
+
+    if(gf_params.speed <=0){
+        gf_params.speed=10;
+        editBox_speed->setText(keepNDecimals( gf_params.speed,1));
+    }
+    
+    if(gf_params.slit_width<=0){
+        gf_params.slit_width=10;
+        editBox_wave_width->setText(keepNDecimals( gf_params.slit_width,1));
+    }
+    
+    if(gf_params.slits_distance<=0){
+        gf_params.slits_distance=10;
+        editBox_slits_distance->setText(keepNDecimals( gf_params.slits_distance,1));
+    }
+    
     return gf_params;
 }
-void ManageGUI::buttonTextBack()
-{
-    button->setText(textOutput::getText("submit_button"));
-    gui_to_manage->draw();
 
 
-}
-// *******************************************************************
-// The member function showErrorWindow(...) creates a window with an
-// error message in it.
-// *******************************************************************
+/*
+ * Creates a window with a error message and a "Ok" button.
+ *
+ * errorMessage : A string containing the error message.
+ */
 
 void ManageGUI::showErrorWindow(std::string errorMessage) {
     sf::RenderWindow errorWindow(sf::VideoMode({300, 200}), "Erreur", sf::Style::Titlebar | sf::Style::Close);
@@ -502,13 +544,11 @@ void ManageGUI::showErrorWindow(std::string errorMessage) {
    
     label_err_msg->setPosition(label_x_pos,label_y_pos);
     
-    
     auto ok_button = tgui::Button::create("Ok");
     ok_button->setSize(60, 40);
 
     unsigned int button_x_pos=(gui.getView().getSize().x - ok_button->getSize().x)/2;
     unsigned int button_y_pos=label_y_pos+label_err_msg->getSize().y+30;
-
 
     ok_button->setPosition(button_x_pos, button_y_pos);
     gui.add(ok_button, "ErrorWindowOkButton");
@@ -516,7 +556,6 @@ void ManageGUI::showErrorWindow(std::string errorMessage) {
     ok_button->onPress([&](){
         errorWindow.close();
     });
-    
     
     while (errorWindow.isOpen()) {
         while (const std::optional event = errorWindow.pollEvent()){
@@ -532,5 +571,4 @@ void ManageGUI::showErrorWindow(std::string errorMessage) {
         gui.draw();
         errorWindow.display();
     }
-    
 }

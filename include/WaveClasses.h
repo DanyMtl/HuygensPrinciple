@@ -18,7 +18,7 @@
 namespace waveForm
 {
     const unsigned int plane=0;
-    const unsigned int spherical=1;
+    const unsigned int circular=1;
     const unsigned int doubleSlit=2;
 }
 
@@ -28,14 +28,22 @@ namespace amplitudeForm
     const unsigned int costheta=1;
 }
 
+
+//**************************************************
+//
+// This GFParameters class to store the parameters needed for GridWave
+//
+//**************************************************
+
 class GFParameters
 {
 public:
-    unsigned int wavelength;
-    unsigned int speed;
-    unsigned int slits_distance;
+    FLOAT wavelength;
+    FLOAT speed;
+    FLOAT slits_distance;
+    FLOAT slit_width;
+    
     unsigned int amplitude_func;
-    unsigned int slit_width;
     unsigned int initial_wave_form;
     unsigned int n_sources;
     FLOAT view_scale_factor;
@@ -67,27 +75,26 @@ private:
     std::vector<std::pair<FLOAT, FLOAT>> sources_coord;
     std::vector<std::pair<FLOAT, FLOAT>> direction_wave;
     
-    unsigned int screen_width;  // the width of the screen where the sources will be created
-    unsigned int screen_height; // the height of the screen where the sources will be created
-    unsigned int slit_width;
-    unsigned int initial_wave_form;
+    unsigned int window_width;  // the width of the screen where the sources will be created
+    unsigned int window_height; // the height of the screen where the sources will be created
+    FLOAT slit_width;
+    FLOAT initial_wave_form;
     
-    unsigned int slits_distance;
+    FLOAT slits_distance;
     unsigned int amplitude_func;
     
 public:
     WaveSources();
     
     void setAmplitudeForm(unsigned int input_amplitude_func);
-    unsigned int getAmplitudeForm();
     
     void setScreenSize(unsigned int input_width, unsigned int input_height );
     
-    void reinitializePlane( unsigned int n_sources,unsigned int input_slit_width);
+    void reinitializePlane( unsigned int n_sources,FLOAT input_slit_width);
     
-    void reinitializeCircular( unsigned int n_sources,unsigned int input_slit_width);
+    void reinitializeCircular( unsigned int n_sources,FLOAT circonference);
     
-    void reinitializeDoubleSlit( unsigned int n_sources,unsigned int input_slit_width, unsigned int input_slits_distance);
+    void reinitializeDoubleSlit( unsigned int n_sources,FLOAT input_slit_width, FLOAT input_slits_distance);
     
     FLOAT x(int n);
     
@@ -101,10 +108,7 @@ public:
     bool isRightDirection(int x, int y, unsigned int n);
     
     FLOAT cosAngleKR(FLOAT x, FLOAT y, int n);
-    
-    unsigned int getSourcesWidth();
-    
-    unsigned int getSlitsDistance();
+        
     
     unsigned int getInitialWaveForm();
     
@@ -129,8 +133,8 @@ public:
 class GridField{
 private:
     
-    unsigned int screen_width;
-    unsigned int screen_height;
+    unsigned int window_width;
+    unsigned int window_height;
     
     std::vector<FLOAT> grid_phase;
     std::vector<FLOAT> grid_amplitude;
@@ -141,13 +145,28 @@ private:
     
     GFParameters parameters;
     
-public:
     WaveSources ws;
     
-    void setAmplitudeForm(unsigned int input_amplitude_func);
-    unsigned int getAmplitudeForm();
+    const std::vector<unsigned char> RGB_amplitude_max={23,116,219};
+    const std::vector<unsigned char> RGB_amplitude_zero={255,255,255};
+    const std::vector<unsigned char> RGB_amplitude_min={255,124,20};
+    
+    const std::vector<unsigned char> RGB_amplitude_text={0,0,0};
 
-    GridField(int input_screen_width, int input_screen_height,GFParameters params);
+    const std::vector<unsigned char> RGB_intensity_max={255,255,255};
+    const std::vector<unsigned char> RGB_intensity_zero={0,0,0};
+    
+    const std::vector<unsigned char> RGB_intensity_text={255,122,0};
+    
+    const std::vector<unsigned char> RGB_sources={0,190,0};
+
+    
+
+    void addImage(std::vector<std::uint8_t> &pix_table, unsigned int x_start, unsigned int y_start,std::vector<std::vector<unsigned char>>  image_vector, std::vector<unsigned char> rgb_text);
+public:
+
+    
+    GridField(int input_window_width, int input_window_height,GFParameters params);
     void initializeParamAndGrid(GFParameters new_parameters);
     
     void initialize_grid();
@@ -156,18 +175,12 @@ public:
     
     GFParameters getParameters();
     
-    unsigned int getWaveLength();
-      
-    FLOAT getWavePeriod();
-    
+    void drawSourcesScreen(std::vector<std::uint8_t> &pix_table);
+    void drawScaleScreen(std::vector<std::uint8_t> &pix_table);
+    void drawScaleScreenAmplitude(std::vector<std::uint8_t> &pix_table);
+    void drawScaleScreenIntensity(std::vector<std::uint8_t> &pix_table);
     unsigned int getNSources();
-    
-    unsigned int getDistanceSources();
-    
-    unsigned int getSourcesWidth();
-    
-    unsigned int getSlitsDistance();
-    
+        
     void testCalculations();
 
 };
