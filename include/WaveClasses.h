@@ -38,6 +38,7 @@ public:
     unsigned int slit_width;
     unsigned int initial_wave_form;
     unsigned int n_sources;
+    FLOAT view_scale_factor;
     
     bool show_intensity;
     
@@ -51,7 +52,8 @@ public:
     bool checkIfGridChange(const GFParameters& gfp_compare);
     
     void printParameters();
-
+    
+    void setDefaultParameters();
 };
 
 //**************************************************
@@ -150,7 +152,7 @@ public:
     
     void initialize_grid();
     
-    void getFieldValues(std::vector<unsigned char> & y_values,FLOAT time);
+    void getPixelsValues(std::vector<std::uint8_t> & pixels_values,FLOAT time);
     
     GFParameters getParameters();
     
@@ -166,7 +168,8 @@ public:
     
     unsigned int getSlitsDistance();
     
-    
+    void testCalculations();
+
 };
 
 

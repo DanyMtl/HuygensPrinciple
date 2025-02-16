@@ -13,8 +13,6 @@
 
 #define PI 3.14159265358979323846
 
-#define COS_DIRECTION true
-
 #define FLOAT double
 
 
@@ -31,6 +29,7 @@ void GFParameters::resetValues(){
     initial_wave_form=0;
     n_sources=0;
     show_intensity=false;
+    view_scale_factor=1;
 }
 
 
@@ -46,7 +45,7 @@ bool GFParameters::checkEmpty(){
 
 bool GFParameters::checkValuesSetCorrectly()
 {
-    if(wavelength<=0|| speed<=0 || slits_distance<0 || slit_width<=0 || n_sources<1)
+    if(wavelength<=0|| speed<=0 || slits_distance<0 || slit_width<=0 || n_sources<1 || view_scale_factor<0)
         return false;
     else
         return true;
@@ -62,7 +61,8 @@ bool GFParameters::operator==(const GFParameters& gfp_compare) const
        && slit_width==gfp_compare.slit_width
        && initial_wave_form==gfp_compare.initial_wave_form
        && n_sources==gfp_compare.n_sources
-       && show_intensity==gfp_compare.show_intensity)
+       && show_intensity==gfp_compare.show_intensity
+       && view_scale_factor==gfp_compare.view_scale_factor)
         return true;
     else
         return false;
@@ -71,9 +71,9 @@ bool GFParameters::operator==(const GFParameters& gfp_compare) const
 
 void GFParameters::printParameters()
 {
-    std::cout << "Wavelenght = " << wavelength << std::endl;
-    std::cout << "Wave speed = " << speed << std::endl;
-    std::cout << "Distance between slits = " << slits_distance << std::endl;
+    std::cout << "Wavelenght : " << wavelength << std::endl;
+    std::cout << "Wave speed : " << speed << std::endl;
+    std::cout << "Distance between slits : " << slits_distance << std::endl;
     std::cout << "Source waves amplitude function : ";
     if(amplitude_func == amplitudeForm::one  )
         std::cout << "No k/θ dependancy"<<std::endl;
@@ -82,8 +82,8 @@ void GFParameters::printParameters()
     else
         std::cout << "Not correctly defined"<<std::endl;
 
-    std::cout << "Slit width = " << slit_width << std::endl;
-    std::cout << "Number of sources = " << n_sources << std::endl;
+    std::cout << "Slit width : " << slit_width << std::endl;
+    std::cout << "Number of sources : " << n_sources << std::endl;
     
     std::cout << "Initial wave form= : ";
     if(initial_wave_form == waveForm::plane )
@@ -93,7 +93,9 @@ void GFParameters::printParameters()
     if(initial_wave_form == waveForm::doubleSlit )
         std::cout <<"Double slit" << std::endl;
     
-    std::cout << "Show power : " << show_intensity << std::endl;
+    std::cout << "Show intensity : " << show_intensity << std::endl;
+    
+    std::cout << "Scale factor the the visual representation: " << view_scale_factor<< std::endl;
 
 
 }
@@ -123,6 +125,17 @@ bool GFParameters::checkIfGridChange(const GFParameters& gfp_compare){
 
 }
 
+void GFParameters::setDefaultParameters(){
+    wavelength=50;
+    speed=40;
+    slits_distance=200;
+    amplitude_func=amplitudeForm::costheta;
+    slit_width=800;
+    initial_wave_form=waveForm::plane;
+    n_sources=40;
+    show_intensity=false;
+    view_scale_factor=1;
+}
 
 //**************************************************
 //
@@ -209,18 +222,17 @@ void WaveSources::reinitializeCircular( unsigned int n_sources,unsigned int inpu
 
     
     FLOAT start_x_coord=FLOAT(screen_width)/2;
-    FLOAT start_y_coord=FLOAT(screen_height)/2;
+    FLOAT start_y_coord=FLOAT(screen_height-10);
     
     
     for(unsigned int n=0;n<n_sources;n++){
-        FLOAT angle=n*2*PI/FLOAT(n_sources);
+        FLOAT angle=2*n*PI/FLOAT(n_sources);
         FLOAT rel_x=radius*std::cos(angle);
         FLOAT rel_y=radius*std::sin(angle);
         FLOAT x_coord=start_x_coord+rel_x;
         FLOAT y_coord=start_y_coord+rel_y;
-        FLOAT norm_rel_r=hypot(rel_x,rel_y);
         sources_coord.push_back({x_coord,y_coord});
-        direction_wave.push_back({rel_x/norm_rel_r,rel_y/norm_rel_r});
+        direction_wave.push_back({rel_x/radius,rel_y/radius});
     }
 }
 
@@ -237,7 +249,7 @@ void WaveSources::reinitializeDoubleSlit( unsigned int n_sources,unsigned int in
     slits_distance=input_slits_distance;
     
     if(slits_distance<=slit_width){
-        reinitializePlane( n_sources*2, slit_width*2);
+        reinitializePlane( n_sources*2, slit_width*2-slits_distance);
         return;
     }
     
@@ -253,12 +265,12 @@ void WaveSources::reinitializeDoubleSlit( unsigned int n_sources,unsigned int in
     sources_coord.clear();
     direction_wave.clear();
     
-    FLOAT start_x_coord1=FLOAT(int(screen_width)-int(2*slit_width+slits_distance))/2.0;
-    FLOAT start_x_coord2=start_x_coord1+slit_width+slits_distance;
+    FLOAT start_x_coord1=FLOAT(int(screen_width)-int(slit_width)-int(slits_distance))/2.0;
+    FLOAT start_x_coord2=FLOAT(start_x_coord1+slits_distance);
 
     for(unsigned int n=0;n<n_sources;n++){
         FLOAT x_coord=start_x_coord1+FLOAT(n)*distance_sources;
-        FLOAT y_coord=FLOAT(screen_height)-10;
+        FLOAT y_coord=FLOAT(screen_height)-10.0;
         sources_coord.push_back({x_coord,y_coord});
         direction_wave.push_back({0.0,-1.0});
         
@@ -332,9 +344,6 @@ unsigned int WaveSources::getSlitsDistance(){
 //
 //**************************************************
  
-
-
-
 // Initialize the grid for the calculations of the field values for each pixel of the screen
 GridField::GridField(int input_screen_width, int input_screen_height, GFParameters input_params){
     screen_width=input_screen_width;
@@ -366,21 +375,17 @@ unsigned int GridField::getAmplitudeForm()
 // them if they get change. The field grid values will be recalculated
 void GridField::initializeParamAndGrid(GFParameters new_parameters){
     
-
     if(new_parameters.checkEmpty()|| new_parameters==parameters)
     {
         return;
     }
     
-    std::cout << "initializeParamAndGrid called" << std::endl;
-
 
     FLOAT new_period=FLOAT(new_parameters.wavelength)/FLOAT(new_parameters.speed);
     w= 2*PI/new_period;
     
     if(!new_parameters.checkIfGridChange(parameters))
     {
-        std::cout << "Grid will not be changed" << std::endl;
         parameters=new_parameters;
         return;
     }
@@ -411,7 +416,45 @@ void GridField::initializeParamAndGrid(GFParameters new_parameters){
    
 }
 
+// This method is used to test the behaviour of the wave amplitude
+void GridField::testCalculations(){
+    FLOAT sources_width=100000;
 
+    FLOAT nnsources= sources_width*10;
+    
+    FLOAT kk=2*PI/10.0;
+    
+
+    unsigned int n_steps=50000;
+
+    FLOAT y_step=1;
+
+    std::vector<float> values(n_steps);
+    
+    FLOAT average=0;
+    
+    for(unsigned int i=0;i<n_steps;i++){
+        FLOAT im_part=0, re_part=0;
+        FLOAT x=0;
+        FLOAT y=FLOAT(i)*y_step+10;
+        for(FLOAT sx = -sources_width/2;sx< sources_width/2;sx+=sources_width/nnsources){
+            float r=std::hypot(x-sx,y);
+            re_part+=cos(kk*r)/sqrt(r);
+            im_part+=sin(kk*r)/sqrt(r);
+        }
+        values[i]=std::hypot(re_part, im_part);
+        average+=values[i]/n_steps;
+    }
+    
+    for(unsigned int i=0;i<n_steps;i++){
+        FLOAT y=FLOAT(i)*y_step+10;
+        std::cout << y << "\t" << values[i]/average << std::endl;
+
+    }
+
+    exit(0);
+    
+}
 
 // Initialize the arrays for the phases and the amplitudes of the spatial part of the sum of the waves.
 void GridField::initialize_grid(){
@@ -427,28 +470,25 @@ void GridField::initialize_grid(){
             unsigned int pos_point=(unsigned int)(j*screen_width+i);
             FLOAT real_sum=0;
             FLOAT imag_sum=0;
-            
-            FLOAT min_r=1e10;
-            
+                        
             for(unsigned int n=0;n<ws.getNSources();n++){
                 
                 FLOAT rel_x=FLOAT(i)-ws.x(n);
                 FLOAT rel_y=FLOAT(j)-ws.y(n);
                 if(!ws.isRightDirection(rel_x, rel_y, n)) continue;
                 FLOAT r = std::hypot(rel_x,rel_y );
+                if(r==0.0) continue;
+                
                 FLOAT sqrt_r= sqrt(r);
                 
                 FLOAT cosKR=ws.cosAngleKR(rel_x, rel_y, n);
-                if(r<min_r) min_r=r;
 
-                if(r==0.0) continue;
-                
                 //for a 2D  wave, the amplitude of wavelets depends on 1/sqrt(r)
                 real_sum+=std::sin(k*r)/sqrt_r*cosKR;
                 imag_sum+=std::cos(k*r)/sqrt_r*cosKR;
             }
             
-            FLOAT local_amplitude=std::hypot(real_sum, imag_sum);
+            FLOAT local_amplitude=std::hypot(-real_sum, -imag_sum);
 
             if(max_amplitude_value<local_amplitude) max_amplitude_value=local_amplitude;
 
@@ -468,7 +508,6 @@ void GridField::initialize_grid(){
         count[int(100*grid_amplitude[i]/max_amplitude_value)]++;
     }
     
-    std::cout << "initial max value " << max_amplitude_value << std::endl;
     FLOAT cummulative=0;
     for(unsigned int i=100;i>=0;i--){
         cummulative += FLOAT(count[i])/FLOAT(screen_height*screen_width) ;
@@ -478,10 +517,9 @@ void GridField::initialize_grid(){
             break;
         }
     }
-    std::cout << "changed max value " << max_amplitude_value << std::endl;
 
     FLOAT scaling_wave_factor =1.0/max_amplitude_value;
-    FLOAT scaling_wave_factor_square=scaling_wave_factor*scaling_wave_factor;
+    
     for(unsigned int i=0;i<screen_height*screen_width;i++){
         grid_amplitude[i]=grid_amplitude[i]*scaling_wave_factor;
     }
@@ -490,22 +528,48 @@ void GridField::initialize_grid(){
 
 
 // Calculates the field values for each pixel of the screen.
-void GridField::getFieldValues(std::vector<unsigned char> & y_values,FLOAT time)
+void GridField::getPixelsValues(std::vector<std::uint8_t> & pixels_values,FLOAT time)
 {
+    
+    int r_positive=23,g_positive=116,b_positive=219;
+    int r_negative=255,g_negative=124,b_negative=20;
+
+    
+    FLOAT adjusted_scale_factor=(std::exp(1.5*parameters.view_scale_factor)-1)/(std::exp(1.5)-1);
+
+    adjusted_scale_factor=std::exp((adjusted_scale_factor))-1;
     if(parameters.show_intensity==false){
         for(unsigned int i=0;i<screen_height*screen_width;i++){
-            FLOAT value=grid_amplitude[i]*sin(grid_phase[i]-w*time);
-            if(value >1) value=1;
+            FLOAT value=grid_amplitude[i]*sin(grid_phase[i]-w*time)*adjusted_scale_factor;
+            if(value >1.0) value=1.0;
             else if(value<-1) value=-1;
-            y_values[i]=(unsigned char)(127*value+127);
+            
+            
+            if(value>=0){
+                pixels_values[i*4+0]=(unsigned char) r_positive+(255-r_positive)*(1-value);
+                pixels_values[i*4+1]=(unsigned char) g_positive+(255-g_positive)*(1-value);
+                pixels_values[i*4+2]=(unsigned char) b_positive+(255-b_positive)*(1-value);
+                pixels_values[i*4+3]=(unsigned char) 255;
+            }
+            else{
+                pixels_values[i*4+0]=(unsigned char)(r_negative+(255-r_negative)*(1+value));
+                pixels_values[i*4+1]=(unsigned char)(g_negative+(255-g_negative)*(1+value));
+                pixels_values[i*4+2]=(unsigned char)(b_negative+(255-b_negative)*(1+value));
+                pixels_values[i*4+3]=(unsigned char) (255);
+            }
+
         }
     }
     else
     {
         for(unsigned int i=0;i<screen_height*screen_width;i++){
-            FLOAT value=grid_amplitude[i]*grid_amplitude[i];
+            FLOAT value=grid_amplitude[i]*grid_amplitude[i]*adjusted_scale_factor;
             if(value>1) value=1;
-            y_values[i]=(unsigned char)(255*value);
+            pixels_values[i*4]=(unsigned char)(value*255);
+            pixels_values[i*4+1]=(unsigned char)(value*255);
+            pixels_values[i*4+2]=(unsigned char)(value*255);
+            pixels_values[i*4+3]=255;
+
 
         }
 

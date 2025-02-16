@@ -9,14 +9,10 @@ namespace textOutput {
     std::map<std::string,std::map<std::string,std::string>> text_languages;
 
     // Language-specific texts
-
-
-
-    
     void initializeText(){
         text_languages["fr"] = {
             {"checkbox_amplitude", "Dépendance en θ de l'amplitude"},
-            {"checkbox_power", "Afficher l'intensité seulement"},
+            {"checkbox_intensity", "Afficher l'intensité de l'onde seulement"},
             
             {"label_WL", "Longueur d'onde (en pixels)"},
             {"label_speed","Vitesse de l'onde\n(pixels/seconde)"},
@@ -33,19 +29,29 @@ namespace textOutput {
             
             {"label_slits_distance","Distance entre les fentes\n(centre à centre)"},
             {"label_option","Choisir la forme de l'onde initiale:"},
-            {"label_parameters","Définir les paramètres:"}, 
+            {"label_parameters","Définir les paramètres:"},
+    
             
             {"radioButton_plane","Onde plane (1 fente)"},
-            {"radioButton_spherical","Onde sphérique"},
+            {"radioButton_spherical","Onde circulaire"},
             {"radioButton_doubleSlit","Deux fentes"},
+            
+            {"label_display", "Options d'affichage"},
+            
+            {"label_slider_scale", "Ajustement de l'échelle de l'amplitude:"},
+            
+            {"label_language","Langue:"},
+            
+            {"comboBox_french","French"},
+            {"comboBox_english","English"},
 
-            {"error_doubleSlit","La distance entre les fentes (de\ncentre à centre) devrait être plus\ngrande que la largeur des fentes.\n Le simulateur va générer une seule onde\n plane (1 fente)."}
+            {"error_doubleSlit","La distance entre les fentes (de\ncentre à centre) devrait être plus\ngrande que la largeur des fentes.\n Les valeurs seront ajustés."}
         };
 
         text_languages["en"]  = {
             {"checkbox_amplitude", " θ dependency of the sources amplitude"},
-            {"checkbox_power", "Show the intensity only"},
-
+            {"checkbox_intensity", "Show the intensity of the wave"},
+            
             
             {"label_WL", "Wavelenght (in pixels)"},
             {"label_speed","Wave speed\n(pixels/second)"},
@@ -58,16 +64,26 @@ namespace textOutput {
             
             {"submit_button","Submit"},
             {"submit_button_calc","Calculating..."},
-
+            
             {"label_slits_distance","Distance between the slits\n(center to center)"},
             {"label_option","Select the form of the initial wave:"},
-            {"label_parameters","Set the parameters"}, 
-
+            {"label_parameters","Set the parameters"},
+            
             {"radioButton_plane","Plane wave (1 slit)"},
-            {"radioButton_spherical","Spherical wave"},
-            {"radioButton_doubleSlit","Double slit"},        
+            {"radioButton_spherical","Circular wave"},
+            {"radioButton_doubleSlit","Double slit"},
+            
+            {"label_display", "Display options"},
+            
+            {"label_slider_scale", "Amplitude scale adjustment"},
+            
+            {"label_language","Language:"},
+            
+            {"comboBox_french","Français"},
+            {"comboBox_english","Anglais"},
 
-            {"error_doubleSlit","The distance between the slits\n(from center to center) should be\ngreater than the slits width. This\nprogram will consider just 1 slit\nwith double width."}
+
+            {"error_doubleSlit","The distance between the slits\n(from center to center) should be\ngreater than the slits width. This\nprogram will change the parameters."}
         };
     }
 
@@ -94,4 +110,9 @@ namespace textOutput {
         }
         return text_languages[current_language][key];
     }
+
+    std::string getCurrentLanguage(){
+        return current_language;
+    }
+
 }
