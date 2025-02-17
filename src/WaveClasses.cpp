@@ -761,7 +761,7 @@ void GridField::drawScaleScreen(std::vector<std::uint8_t> &pix_table){
  * Adds the color scale associated to the resulting wave amplitude for the main window.
  */
 void GridField::drawScaleScreenAmplitude(std::vector<std::uint8_t> &pix_table){
-    unsigned int x_start=window_width-120;
+    unsigned int x_start=window_width-80;
     unsigned int y_start=20;
     
     unsigned int scale_width=30;
@@ -775,9 +775,9 @@ void GridField::drawScaleScreenAmplitude(std::vector<std::uint8_t> &pix_table){
     text_y_pos=y_start-(unsigned int)GridWaveImages::zero_image_data.size()/2 +scale_height/2;
     addImage(pix_table,text_x_pos,text_y_pos,GridWaveImages::zero_image_data,RGB_amplitude_text);
     
-    text_x_pos=x_start-(unsigned int)GridWaveImages::min_image_data[0].size()-5;
-    text_y_pos=y_start-(unsigned int)GridWaveImages::min_image_data.size()/2+scale_height;
-    addImage(pix_table,text_x_pos,text_y_pos,GridWaveImages::min_image_data,RGB_amplitude_text);
+    text_x_pos=x_start-(unsigned int)GridWaveImages::minus_max_image_data[0].size()-5;
+    text_y_pos=y_start-(unsigned int)GridWaveImages::minus_max_image_data.size()/2+scale_height;
+    addImage(pix_table,text_x_pos,text_y_pos,GridWaveImages::minus_max_image_data,RGB_amplitude_text);
     
     
     unsigned int border_size=2;
@@ -828,7 +828,7 @@ void GridField::drawScaleScreenAmplitude(std::vector<std::uint8_t> &pix_table){
  * Adds the color scale associated to the resulting wave instensity for the main window.
  */
 void GridField::drawScaleScreenIntensity(std::vector<std::uint8_t> &pix_table){
-    unsigned int x_start=window_width-120;
+    unsigned int x_start=window_width-80;
     unsigned int y_start=20;
     
     unsigned int scale_width=30;
