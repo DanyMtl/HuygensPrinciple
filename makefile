@@ -1,13 +1,20 @@
 # Compiler
-CXX = g++
+CXX = clang++
 
-TGUI_HEADERS=/opt/homebrew/include/ 
-SFML_HEADERS=/opt/homebrew/include/ 
-TGUI_LIBS=/opt/homebrew/lib/
-SFML_LIBS=/opt/homebrew/lib/
+TGUI_HEADERS=/usr/local/include/ 
+SFML_HEADERS=/usr/local/include/ 
+TGUI_LIBS=/usr/local/lib/
+SFML_LIBS=/usr/local/lib/
+
+ifeq ($(shell uname), Darwin)
+  MACOS_HEADER=$(shell xcrun --show-sdk-path)/usr/include/c++/v1/
+else
+  MACOS_HEADER=''
+endif
+# MACOS_HEADER=/Library/Developer/CommandLineTools/SDKs/MacOSX15.1.sdk/usr/include/c++/v1/cstdint
 
 # Compiler flags
-CXXFLAGS = -std=c++23 -Wall -Wextra -O2  -I$(SFML_HEADERS) -I$(TGUI_HEADERS)
+CXXFLAGS = -std=c++20 -Wall -Wextra -O2  -I$(SFML_HEADERS) -I$(TGUI_HEADERS) -I$(MACOS_HEADER)
 
 # Frameworks to link (macOS-specific)
 LDFLAGS = -L$(SFML_LIBS) -L$(TGUI_LIBS) -ltgui -lsfml-graphics -lsfml-window -lsfml-system
