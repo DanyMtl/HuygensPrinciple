@@ -83,28 +83,6 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
     button_submit->onPress([&](){
         std::string userInput;
 
-        userInput=editBox_WL->getText().toStdString();
-        if(!userInput.empty()) gf_params.wavelength = std::stod(userInput);
-        userInput=editBox_nsources->getText().toStdString();
-        if(!userInput.empty()) gf_params.n_sources = std::stoi(userInput);
-        userInput=editBox_wave_width->getText().toStdString();
-        if(!userInput.empty()) gf_params.slit_width = std::stod(userInput);
-        userInput=editBox_speed->getText().toStdString();
-        if(!userInput.empty()) gf_params.speed = std::stod(userInput);
-        userInput=editBox_slits_distance->getText().toStdString();
-        
-        if (checkbox_amplitude->isChecked())
-            gf_params.amplitude_func =amplitudeForm::costheta;
-        else
-            gf_params.amplitude_func =amplitudeForm::one;
-        
-        if (checkbox_intensity->isChecked())
-            gf_params.show_intensity =true;
-        else
-            gf_params.show_intensity =false;
-        
-        if(!userInput.empty()) gf_params.slits_distance = std::stod(userInput);
-        
         if (radioButton_plane->isChecked()){
             gf_params.initial_wave_form =waveForm::plane;
         }
@@ -117,9 +95,54 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
         else{
             std::cerr << "Initial wave form not valid.\nThe problem is in the ManageGUI Class." <<std::endl;
         }
+        
+        userInput=editBox_speed->getText().toStdString();
+        if(!userInput.empty()) gf_params.speed = std::stod(userInput);
+        
+        userInput=editBox_WL->getText().toStdString();
+        if(!userInput.empty()) gf_params.wavelength = std::stod(userInput);
+
+        
+        if(gf_params.initial_wave_form==waveForm::doubleSlit || gf_params.initial_wave_form==waveForm::circular)
+        {
+            userInput=editBox_wave_width->getText().toStdString();
+            if(!userInput.empty()) gf_params.slit_width = std::stod(userInput);
+            
+            userInput=editBox_nsources->getText().toStdString();
+            if(!userInput.empty()) gf_params.n_sources = std::stoi(userInput);
+        }
+        
+        if(gf_params.initial_wave_form==waveForm::doubleSlit){
+            userInput=editBox_slits_distance->getText().toStdString();
+            if(!userInput.empty()) gf_params.slits_distance = std::stod(userInput);
+            userInput=editBox_number_of_slits->getText().toStdString();
+            if(!userInput.empty()) gf_params.n_slits = std::stoi(userInput);
+        }
+            
+        if(gf_params.initial_wave_form==waveForm::plane){
+            userInput=editBox_inf_sources_distance->getText().toStdString();
+            if(!userInput.empty()) gf_params.infplane_distance_sources = std::stod(userInput);
+        }
+        
+        if (checkbox_amplitude->isChecked())
+            gf_params.amplitude_func =amplitudeForm::costheta;
+        else
+            gf_params.amplitude_func =amplitudeForm::one;
+        
+        if (checkbox_intensity->isChecked())
+            gf_params.show_intensity =true;
+        else
+            gf_params.show_intensity =false;
+        
+        
+
         was_button_pressed=true;
         
         button_submit->setText(textOutput::getText("submit_button_calc"));
+        
+        gf_params.view_scale_factor=1;
+        slider_scale->setValue(1);
+        
 
     });
     
@@ -143,8 +166,19 @@ ManageGUI::ManageGUI( tgui::Gui &input_gui, GFParameters input_gf_params){
 void ManageGUI::setPlaneWidgets(){
     gui_to_manage->remove(editBox_slits_distance);
     gui_to_manage->remove(label_slits_distance);
-    label_wave_width->setText(textOutput::getText("label_wave_width_plane"));
-    label_nsources->setText(textOutput::getText("label_nsources"));
+    gui_to_manage->remove(editBox_nsources);
+    gui_to_manage->remove(label_nsources);
+    gui_to_manage->remove(editBox_wave_width);
+    gui_to_manage->remove(label_wave_width);
+    
+    gui_to_manage->remove(editBox_number_of_slits);
+    gui_to_manage->remove(label_number_of_slits);
+
+    gui_to_manage->add(editBox_inf_sources_distance,"EditBoxInfDistanceSources");
+    gui_to_manage->add(label_inf_sources_distance,"LabelInfDistanceSources");
+
+    //label_wave_width->setText(textOutput::getText("label_wave_width_plane"));
+    //label_nsources->setText(textOutput::getText("label_nsources"));
 
     return;
 }
@@ -154,8 +188,19 @@ void ManageGUI::setPlaneWidgets(){
  * Sets up the the widgets configuration and text for the "Circular wave" option.
  */
 void ManageGUI::setCircularWidgets(){
+    gui_to_manage->remove(editBox_inf_sources_distance);
+    gui_to_manage->remove(label_inf_sources_distance);
     gui_to_manage->remove(editBox_slits_distance);
     gui_to_manage->remove(label_slits_distance);
+
+    gui_to_manage->remove(editBox_number_of_slits);
+    gui_to_manage->remove(label_number_of_slits);
+    
+    gui_to_manage->add(editBox_nsources,"EditBoxNumberSources");
+    gui_to_manage->add(label_nsources,"LabelNumberSources");
+    gui_to_manage->add(editBox_wave_width,"EditBoxWaveWidth");
+    gui_to_manage->add(label_wave_width,"LabelWaveWidth");
+    
     label_wave_width->setText(textOutput::getText("label_wave_width_circular"));
     label_nsources->setText(textOutput::getText("label_nsources"));
     return;
@@ -166,12 +211,22 @@ void ManageGUI::setCircularWidgets(){
  * Sets up the the widgets configuration and text for the "Double slit" option.
  */
 void ManageGUI::setDoubleSlitWidgets(){
-    
-    label_wave_width->setText(textOutput::getText("label_wave_width_doubleSlit"));
-    label_nsources->setText(textOutput::getText("label_nsources_doubleSlit"));
+    gui_to_manage->remove(editBox_inf_sources_distance);
+    gui_to_manage->remove(label_inf_sources_distance);
+
+    gui_to_manage->add(editBox_nsources,"EditBoxNumberSources");
+    gui_to_manage->add(label_nsources,"LabelNumberSources");
+    gui_to_manage->add(editBox_wave_width,"EditBoxWaveWidth");
+    gui_to_manage->add(label_wave_width,"LabelWaveWidth");
     
     gui_to_manage->add(editBox_slits_distance,  "EditBoxSlitsDistance");
     gui_to_manage->add(label_slits_distance, "LabelSlitsDistance");
+
+    gui_to_manage->add(editBox_number_of_slits);
+    gui_to_manage->add(label_number_of_slits);
+    
+    label_wave_width->setText(textOutput::getText("label_wave_width_doubleSlit"));
+    label_nsources->setText(textOutput::getText("label_nsources_doubleSlit"));
 }
 
 /*
@@ -209,15 +264,15 @@ void ManageGUI::updateContextualWidgets(){
     // Change the widgets if the user selected a new form
     if(current_waveForm_option==waveForm::plane){
         setPlaneWidgets();
-        button_submit->setPosition(100, initial_submit_yposition);
+        //button_submit->setPosition(100, initial_submit_yposition-40);
     }
     else if(current_waveForm_option==waveForm::circular){
         setCircularWidgets();
-        button_submit->setPosition(100, initial_submit_yposition);
+        //button_submit->setPosition(100, initial_submit_yposition);
     }
     else if(current_waveForm_option==waveForm::doubleSlit){
         setDoubleSlitWidgets();
-        button_submit->setPosition(100, initial_submit_yposition+35);
+        //button_submit->setPosition(100, initial_submit_yposition+35);
     }
     
     last_waveForm_option=current_waveForm_option;
@@ -320,13 +375,28 @@ void ManageGUI::setGeneralWidgets(){
     editBox_nsources->setPosition(10, widget_y_position);
     editBox_nsources->setText(std::to_string(gf_params.n_sources));
     editBox_nsources->setInputValidator(tgui::EditBox::Validator::UInt);
-    gui_to_manage->add(editBox_nsources, "EditBoxNumberSources");
+    if(gf_params.initial_wave_form==waveForm::doubleSlit || gf_params.initial_wave_form==waveForm::circular)
+        gui_to_manage->add(editBox_nsources, "EditBoxNumberSources");
 
     label_nsources = tgui::Label::create();
     label_nsources->setPosition(120, widget_y_position+6);
     label_nsources->setTextSize(FONT_SIZE);
-    gui_to_manage->add(label_nsources, "LabelNumberSources");
+    if(gf_params.initial_wave_form==waveForm::doubleSlit || gf_params.initial_wave_form==waveForm::circular)
+        gui_to_manage->add(label_nsources, "LabelNumberSources");
     
+    editBox_inf_sources_distance = tgui::EditBox::create();
+    editBox_inf_sources_distance->setSize(100, 30);
+    editBox_inf_sources_distance->setPosition(10, widget_y_position);
+    editBox_inf_sources_distance->setText(std::to_string(gf_params.infplane_distance_sources));
+    editBox_inf_sources_distance->setInputValidator(tgui::EditBox::Validator::UInt);
+    if(gf_params.initial_wave_form==waveForm::plane)
+        gui_to_manage->add(editBox_inf_sources_distance, "EditBoxInfDistanceSources");
+
+    label_inf_sources_distance = tgui::Label::create();
+    label_inf_sources_distance->setPosition(120, widget_y_position+6);
+    label_inf_sources_distance->setTextSize(FONT_SIZE);
+    if(gf_params.initial_wave_form==waveForm::plane)
+        gui_to_manage->add(label_inf_sources_distance, "LabelInfDistanceSources");
     
     widget_y_position+=35;
     editBox_wave_width = tgui::EditBox::create();
@@ -334,14 +404,16 @@ void ManageGUI::setGeneralWidgets(){
     editBox_wave_width->setPosition(10, widget_y_position);
     editBox_wave_width->setText(keepNDecimals(gf_params.slit_width,1));
     editBox_wave_width->setInputValidator(tgui::EditBox::Validator::Float);
-    gui_to_manage->add(editBox_wave_width, "EditBoxWaveWidth");
+    if(gf_params.initial_wave_form==waveForm::doubleSlit || gf_params.initial_wave_form==waveForm::circular)
+        gui_to_manage->add(editBox_wave_width, "EditBoxWaveWidth");
 
     label_wave_width= tgui::Label::create();
     label_wave_width->setPosition(120, widget_y_position);
     label_wave_width->setTextSize(FONT_SIZE);
-    gui_to_manage->add(label_wave_width, "LabelWaveWidth");
+    if(gf_params.initial_wave_form==waveForm::doubleSlit || gf_params.initial_wave_form==waveForm::circular)
+        gui_to_manage->add(label_wave_width, "LabelWaveWidth");
     
-    initial_submit_yposition=widget_y_position+40;
+    //initial_submit_yposition=widget_y_position+40;
 
     widget_y_position+=35;
     editBox_slits_distance=tgui::EditBox::create();
@@ -349,19 +421,39 @@ void ManageGUI::setGeneralWidgets(){
     editBox_slits_distance->setPosition(10, widget_y_position);
     editBox_slits_distance->setText(keepNDecimals(gf_params.slits_distance,1));
     editBox_slits_distance->setInputValidator(tgui::EditBox::Validator::Float);
+    if(gf_params.initial_wave_form==waveForm::doubleSlit)
+        gui_to_manage->add(editBox_slits_distance, "EditBoxSlitsDistance");
+
     
     label_slits_distance=tgui::Label::create();
     label_slits_distance->setPosition(120,widget_y_position+6);
     label_slits_distance->setTextSize(FONT_SIZE);
+    if(gf_params.initial_wave_form==waveForm::doubleSlit)
+        gui_to_manage->add(label_slits_distance, "LabelSlitsDistance");
 
-
-    button_submit = tgui::Button::create();
-    button_submit->setSize(120, 40);
-    button_submit->setPosition(100, initial_submit_yposition);
-    gui_to_manage->add(button_submit, "SubmitButton");
+    widget_y_position+=35;
+    editBox_number_of_slits=tgui::EditBox::create();
+    editBox_number_of_slits->setSize(100, 30);
+    editBox_number_of_slits->setPosition(10, widget_y_position);
+    editBox_number_of_slits->setText(std::to_string(gf_params.n_slits));
+    editBox_number_of_slits->setInputValidator(tgui::EditBox::Validator::UInt);
+    if(gf_params.initial_wave_form==waveForm::doubleSlit)
+        gui_to_manage->add(editBox_number_of_slits, "EditBoxNumberOfSlits");
 
     
-    widget_y_position+=50+40;
+    label_number_of_slits=tgui::Label::create();
+    label_number_of_slits->setPosition(120,widget_y_position+6);
+    label_number_of_slits->setTextSize(FONT_SIZE);
+    if(gf_params.initial_wave_form==waveForm::doubleSlit)
+        gui_to_manage->add(label_number_of_slits, "LabelNumberOfSlits");
+    
+    widget_y_position+=40;
+    button_submit = tgui::Button::create();
+    button_submit->setSize(120, 40);
+    button_submit->setPosition(100, widget_y_position);
+    gui_to_manage->add(button_submit, "SubmitButton");
+    
+    widget_y_position+=50;
     separator2 = tgui::SeparatorLine::create();
     separator2->setPosition({0, widget_y_position});
     separator2->setSize({500, 2});
@@ -454,6 +546,8 @@ void ManageGUI::setTextInGUI(){
     label_WL->setText(textOutput::getText("label_WL"));
     label_speed->setText(textOutput::getText("label_speed"));
     label_nsources->setText(textOutput::getText("label_nsources"));
+    label_inf_sources_distance->setText(textOutput::getText("label_inf_sources_distance"));
+    label_number_of_slits->setText(textOutput::getText("label_number_of_slits"));
     label_wave_width->setText(textOutput::getText("label_wave_width_plane"));
     label_slits_distance->setText(textOutput::getText("label_slits_distance"));
     button_submit->setText(textOutput::getText("submit_button"));
@@ -470,6 +564,8 @@ void ManageGUI::setTextInGUI(){
    
 }
 
+#define MAX_SUM_PERIODICITY 100
+
 /*
  * Returns the parameters that the user have entered. It also checks if the values make sense
  * (they should be greater than 0). Also, if the submit button was pressed, it changes the text
@@ -481,16 +577,27 @@ void ManageGUI::setTextInGUI(){
  */
 GFParameters ManageGUI::getNewParameters()
 {
-    if(gf_params.initial_wave_form==waveForm::doubleSlit){
+    if(gf_params.initial_wave_form==waveForm::doubleSlit && gf_params.n_slits>1){
         if(gf_params.slit_width>=gf_params.slits_distance){
             showErrorWindow(textOutput::getText("error_doubleSlit"));
-            gf_params.slit_width=100;
+            
             gf_params.slits_distance=2*gf_params.slit_width;
             editBox_wave_width->setText(keepNDecimals( gf_params.slit_width,1));
             editBox_slits_distance->setText(keepNDecimals( gf_params.slits_distance,1));
         }
     }
     
+    if(gf_params.initial_wave_form==waveForm::plane){
+        FLOAT periodicity=getSumPeriodicity(gf_params.infplane_distance_sources, gf_params.wavelength);
+        if( periodicity > MAX_SUM_PERIODICITY+0.1){
+            gf_params.wavelength= changeLambdaForPeriodicity(gf_params.infplane_distance_sources, gf_params.wavelength, MAX_SUM_PERIODICITY);
+            editBox_WL->setText(keepNDecimals(gf_params.wavelength,2));
+            showErrorWindow(textOutput::getText("error_wl_change"));
+
+        }
+            
+    }
+
     if(gf_params.n_sources<1){
         gf_params.n_sources=1;
         editBox_nsources->setText(std::to_string( gf_params.n_sources));
@@ -527,7 +634,7 @@ GFParameters ManageGUI::getNewParameters()
  */
 
 void ManageGUI::showErrorWindow(std::string errorMessage) {
-    sf::RenderWindow errorWindow(sf::VideoMode({300, 200}), "Erreur", sf::Style::Titlebar | sf::Style::Close);
+    sf::RenderWindow errorWindow(sf::VideoMode({400, 250}), "Erreur", sf::Style::Titlebar | sf::Style::Close);
     tgui::Gui gui(errorWindow);
     
     auto label_err_msg=tgui::Label::create(errorMessage);

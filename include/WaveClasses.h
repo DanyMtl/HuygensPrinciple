@@ -46,6 +46,9 @@ public:
     unsigned int amplitude_func;
     unsigned int initial_wave_form;
     unsigned int n_sources;
+    unsigned int n_slits;
+    
+    unsigned int infplane_distance_sources;
     FLOAT view_scale_factor;
     
     bool show_intensity;
@@ -90,11 +93,11 @@ public:
     
     void setScreenSize(unsigned int input_width, unsigned int input_height );
     
-    void reinitializePlane( unsigned int n_sources,FLOAT input_slit_width);
-    
+    //void reinitializePlane( unsigned int n_sources,FLOAT input_slit_width);
+    void reinitializePlane( int distance_sources);
     void reinitializeCircular( unsigned int n_sources,FLOAT circonference);
     
-    void reinitializeDoubleSlit( unsigned int n_sources,FLOAT input_slit_width, FLOAT input_slits_distance);
+    void reinitializeMultipleSlits( unsigned int n_slits, unsigned int n_sources,FLOAT input_slit_width, FLOAT input_slits_distance);
     
     FLOAT x(int n);
     
@@ -169,8 +172,9 @@ public:
     GridField(int input_window_width, int input_window_height,GFParameters params);
     void initializeParamAndGrid(GFParameters new_parameters);
     
-    void initialize_grid();
-    
+    void initializeGrid();
+    void initializeInfinitPlaneGrid();
+
     void getPixelsValues(std::vector<std::uint8_t> & pixels_values,FLOAT time);
     
     GFParameters getParameters();
@@ -185,7 +189,43 @@ public:
 
 };
 
+/*
+ * This function finds the periodicity of the sum when n is large. In this case, the sum
+ * fluctuates as e^{kdn}=e^{2*pi*d*n/lambda}, where d is the distance between the sources.
+ * The periodicity in n seems to be lambda/d. However, since n can only have integer values,
+ * we can add or remove 2*pi to the cycles frequency (2*pi*d/lambda) without changing the
+ * fluctuations frequency in n.
+ *
+ * The periodicity found here is a number greater than 1, using the property explained in the
+ * previous paragraph.
+ *
+ */
 
+template <typename T> T getSumPeriodicity(int distance_sources, T wavelength){
+    
+    double delta=std::fabs(distance_sources/wavelength-std::round(distance_sources/wavelength));
+    if(delta!=0)
+        return 1/delta;
+    else
+        return 1E99;
+}
 
+/*
+ *  This function makes sure the sum periodicity is at least
+ */
+
+template <typename T> T changeLambdaForPeriodicity(int distance_sources, T wavelength, double target_periodicity){
+
+    if(getSumPeriodicity(distance_sources, wavelength)<= target_periodicity){
+        return wavelength;
+    }
+    
+    if((std::round(distance_sources/wavelength)-int(distance_sources/wavelength))==0 ){
+        return distance_sources/(std::round(distance_sources/wavelength)+1/target_periodicity);
+    }
+    else{
+        return distance_sources/(std::round(distance_sources/wavelength)-1/target_periodicity);
+    }
+}
 
 #endif // WAVECLASSES_H

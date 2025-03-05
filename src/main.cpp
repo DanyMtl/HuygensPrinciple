@@ -21,7 +21,7 @@ int main()
     sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
     
     input_win_width=350;
-    input_win_height=650;
+    input_win_height=690;
     main_win_height=(unsigned int)(0.85*float(desktop.size.y));
     main_win_width=desktop.size.x -input_win_width;
     
@@ -42,7 +42,7 @@ int main()
     {
         (void) inputWindow.pollEvent();
         (void) mainWindow.pollEvent();
-        sf::sleep(sf::seconds(0.02)); 
+        sf::sleep(sf::seconds(0.05)); 
     }
     
     

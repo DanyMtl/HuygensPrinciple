@@ -19,9 +19,9 @@
 
 class ManageGUI{
 private:
-    tgui::EditBox::Ptr editBox_WL, editBox_nsources, editBox_wave_width, editBox_speed,editBox_slits_distance;
+    tgui::EditBox::Ptr editBox_WL, editBox_nsources, editBox_wave_width, editBox_speed,editBox_slits_distance, editBox_inf_sources_distance, editBox_number_of_slits;
 
-    tgui::Label::Ptr  label_WL, label_nsources, label_wave_width, label_speed, label_slits_distance,label_slider_scale, label_display,label_language,label_copyright;
+    tgui::Label::Ptr  label_WL, label_nsources, label_wave_width, label_speed, label_slits_distance,label_slider_scale, label_display,label_language,label_copyright, label_inf_sources_distance, label_number_of_slits;
     
     tgui::SeparatorLine::Ptr separator1, separator2, separator3;
     tgui::CheckBox::Ptr checkbox_amplitude,checkbox_intensity;

@@ -22,7 +22,9 @@ namespace textOutput {
             {"label_wave_width_doubleSlit","Largeur de chaque fente\n(en pixels)"},
             {"label_nsources","Nombre de sources"},
             {"label_nsources_doubleSlit","Nombre de sources par fente"},
-            
+            {"label_inf_sources_distance", "Distance entre les sources\n(en pixels)"},
+            {"label_number_of_slits", "Nombre de fentes"},
+
             {"submit_button","Soumettre"},
             {"submit_button_calc","Calcul en cours..."},
 
@@ -32,9 +34,9 @@ namespace textOutput {
             {"label_parameters","Définir les paramètres:"},
     
             
-            {"radioButton_plane","Onde plane (1 fente)"},
+            {"radioButton_plane","Onde plane infinie"},
             {"radioButton_circular","Onde circulaire"},
-            {"radioButton_doubleSlit","Deux fentes"},
+            {"radioButton_doubleSlit","Système de fentes"},
             
             {"label_display", "Options d'affichage"},
             
@@ -48,7 +50,8 @@ namespace textOutput {
             {"label_copyright","© Dany Plouffe, 2025"},
 
             
-            {"error_doubleSlit","La distance entre les fentes (de\ncentre à centre) devrait être plus\ngrande que la largeur des fentes.\n Les valeurs seront ajustés."}
+            {"error_doubleSlit","La distance entre les fentes (de\ncentre à centre) devrait être plus\ngrande que la largeur des fentes.\n Les valeurs seront ajustés."},
+            {"error_wl_change", "Les paramètres choisis ne permettent\npas la convergence des calculs.\nLe ratio distance/longueur d'onde ne devrait pas\nêtre un entier. La longueur d'onde sera ajustée."}
         };
 
         text_languages["en"]  = {
@@ -64,7 +67,9 @@ namespace textOutput {
             {"label_wave_width_doubleSlit","Slit width (in pixel)"},
             {"label_nsources","Number of sources"},
             {"label_nsources_doubleSlit","Number of sources per slit"},
-            
+            {"label_inf_sources_distance", "Distance between sources\n(in pixels)"},
+            {"label_number_of_slits", "Number of slits"},
+
             {"submit_button","Submit"},
             {"submit_button_calc","Calculating..."},
             
@@ -72,9 +77,9 @@ namespace textOutput {
             {"label_option","Select the form of the initial wave:"},
             {"label_parameters","Set the parameters"},
             
-            {"radioButton_plane","Plane wave (1 slit)"},
+            {"radioButton_plane","Infinit plane wave"},
             {"radioButton_circular","Circular wave"},
-            {"radioButton_doubleSlit","Double slit"},
+            {"radioButton_doubleSlit","Multiple slits"},
             
             {"label_display", "Display options"},
             
@@ -87,7 +92,8 @@ namespace textOutput {
             
             {"label_copyright","© Dany Plouffe, 2025"},
 
-            {"error_doubleSlit","The distance between the slits\n(from center to center) should be\ngreater than the slits width. This\nprogram will change the parameters."}
+            {"error_doubleSlit","The distance between the slits\n(from center to center) should be\ngreater than the slits width. This\nprogram will change the parameters."},
+            {"error_wl_change", "The current parameters prevent\nconvergence in the calculations.\nThe ratio distance/wavelength should not be\nan integer. The wavelenght will be changed."}
         };
     }
 
